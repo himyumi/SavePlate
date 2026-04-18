@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>SavePlate – Browse Donations</title>
+  <link rel="stylesheet" href="css/style.css"/>
+  <style>
+    .donate-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:14px; }
+    .donate-card { background:var(--navy-card); color:#fff; border-radius:14px; padding:18px; transition:transform .2s; }
+    .donate-card:hover { transform:translateY(-2px); }
+    .dc-emoji { font-size:38px; margin-bottom:12px; display:block; }
+    .dc-name  { font-size:15px; font-weight:700; margin-bottom:8px; }
+    .dc-row   { font-size:12px; color:#9ab5cc; margin-bottom:4px; }
+    .dc-btn   { margin-top:14px; width:100%; background:rgba(255,255,255,.1); border:1.5px solid rgba(255,255,255,.2); color:#fff; border-radius:8px; padding:8px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600; cursor:pointer; transition:.2s; }
+    .dc-btn:hover { background:rgba(255,255,255,.2); }
+  </style>
+</head>
+<body>
+  <div id="sidebar-root"></div>
+  <div class="main-wrap">
+    <div id="topbar-root"></div>
+    <div class="page-content">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Browse Donations</div>
+          <div class="page-sub">Claim available food from community members near you</div>
+        </div>
+      </div>
+      <div class="search-row">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" placeholder="Search listings..." oninput="filter(this.value)"/>
+        </div>
+        <select class="cat-select">
+          <option>📍 All Locations</option>
+          <option>Kuala Lumpur</option>
+          <option>Petaling Jaya</option>
+          <option>Subang Jaya</option>
+        </select>
+      </div>
+      <div class="donate-grid" id="grid"></div>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script>
+    SavePlate.guardAuth();
+    document.getElementById('sidebar-root').innerHTML = SavePlate.renderSidebar('');
+    document.getElementById('topbar-root').innerHTML  = SavePlate.renderTopbar('Browse Donations');
+
+    function render(data){
+      document.getElementById('grid').innerHTML = data.map(d=>`
+        <div class="donate-card">
+          <span class="dc-emoji">${d.emoji}</span>
+          <div class="dc-name">${d.name}</div>
+          <div class="dc-row">📦 ${d.qty}</div>
+          <div class="dc-row">📍 ${d.loc}</div>
+          <div class="dc-row">⏰ Expires: ${d.exp}</div>
+          <div class="dc-row">👤 From: ${d.donor}</div>
+          <button class="dc-btn" onclick="alert('Donation request sent for &quot;${d.name}&quot;!')">Request / Claim</button>
+        </div>`).join('');
+    }
+    function filter(q){ render(SavePlate.donations.filter(d=>d.name.toLowerCase().includes(q.toLowerCase()))); }
+    render(SavePlate.donations);
+  </script>
+</body>
+</html>

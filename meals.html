@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>SavePlate – Meal Planning</title>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+  <div id="sidebar-root"></div>
+  <div class="main-wrap">
+    <div id="topbar-root"></div>
+    <div class="page-content">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Meal Planning</div>
+          <div class="page-sub">Plan your weekly meals using inventory items</div>
+        </div>
+        <button class="btn-green" onclick="location.href='browse.html'">🔍 Browse Donations</button>
+      </div>
+      <div class="week-grid" id="week-grid"></div>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script>
+    SavePlate.guardAuth();
+    document.getElementById('sidebar-root').innerHTML = SavePlate.renderSidebar('meals');
+    document.getElementById('topbar-root').innerHTML  = SavePlate.renderTopbar('Meal Planning');
+
+    const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    document.getElementById('week-grid').innerHTML = days.map(d=>`
+      <div class="week-col">
+        <div class="week-day-name">${d}</div>
+        ${(SavePlate.meals[d]||[]).map(m=>`
+          <div class="week-slot">
+            <div class="week-slot-type">${m.t}</div>
+            <div class="week-slot-name">${m.n}</div>
+          </div>`).join('')}
+        <button class="add-slot" onclick="addMeal('${d}')">+ Add</button>
+      </div>`).join('');
+
+    function addMeal(day){
+      const name=prompt(`Meal name for ${day}:`); if(!name)return;
+      const type=prompt('Type (Breakfast/Lunch/Dinner):')||'Meal';
+      if(!SavePlate.meals[day]) SavePlate.meals[day]=[];
+      SavePlate.meals[day].push({t:type,n:name});
+      location.reload();
+    }
+  </script>
+</body>
+</html>

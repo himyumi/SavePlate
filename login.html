@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>SavePlate – Log In</title>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+  <div class="auth-page">
+    <div class="auth-card">
+      <span class="auth-logo">🍞</span>
+      <div class="auth-title">SavePlate</div>
+      <div class="auth-sub">Smart food waste reduction</div>
+      <label class="auth-field-label">Email</label>
+      <input class="auth-input" type="email" id="email" placeholder="you@email.com"/>
+      <label class="auth-field-label">Password</label>
+      <input class="auth-input" type="password" id="pass" placeholder="••••••••"/>
+      <a class="auth-link" href="signup.html">Don't have an account?</a>
+      <button class="btn-navy" onclick="doLogin()">Log In</button>
+      <p id="err" style="color:var(--red);font-size:12px;margin-top:10px;display:none">Please fill in all fields.</p>
+    </div>
+  </div>
+  <script src="js/data.js"></script>
+  <script>
+    function doLogin(){
+      const e=document.getElementById('email').value.trim();
+      const p=document.getElementById('pass').value.trim();
+      if(!e||!p){document.getElementById('err').style.display='block';return;}
+      SavePlate.setUser({name:e.split('@')[0],email:e});
+      location.href='dashboard.html';
+    }
+    document.addEventListener('keydown',ev=>{if(ev.key==='Enter')doLogin();});
+  </script>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>SavePlate – Settings</title>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+  <div id="sidebar-root"></div>
+  <div class="main-wrap">
+    <div id="topbar-root"></div>
+    <div class="page-content">
+      <div class="page-title">Settings</div>
+      <div class="page-sub">Manage your account and preferences</div>
+
+      <!-- Profile Banner -->
+      <div class="profile-banner">
+        <div class="profile-big-av">👤</div>
+        <div>
+          <div class="profile-bn" id="pname">User</div>
+          <div class="profile-be" id="pemail">user@email.com</div>
+        </div>
+      </div>
+
+      <!-- Account Settings -->
+      <div class="settings-section">
+        <div class="settings-section-label">Account</div>
+        <div class="settings-card">
+          <div class="settings-row">
+            <span class="settings-row-lbl">🔐 Two-Factor Authentication</span>
+            <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+          </div>
+          <div class="settings-row">
+            <span class="settings-row-lbl">📧 Email Alerts for Expiry</span>
+            <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+          </div>
+          <div class="settings-row">
+            <span class="settings-row-lbl">👁 Food Listing Visibility</span>
+            <div class="toggle" onclick="this.classList.toggle('on')"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notifications -->
+      <div class="settings-section">
+        <div class="settings-section-label">Notifications</div>
+        <div class="settings-card">
+          <div class="settings-row">
+            <span class="settings-row-lbl">🔔 Push Notifications</span>
+            <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+          </div>
+          <div class="settings-row">
+            <span class="settings-row-lbl">⚠️ Expiry Reminders</span>
+            <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+          </div>
+          <div class="settings-row">
+            <span class="settings-row-lbl">🤝 Donation Alerts</span>
+            <div class="toggle" onclick="this.classList.toggle('on')"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- App -->
+      <div class="settings-section">
+        <div class="settings-section-label">App</div>
+        <div class="settings-card">
+          <div class="settings-row">
+            <span class="settings-row-lbl">🌙 Dark Mode</span>
+            <div class="toggle" onclick="this.classList.toggle('on')"></div>
+          </div>
+          <div class="settings-row" style="cursor:pointer" onclick="logout()">
+            <span class="settings-row-lbl" style="color:var(--red)">🚪 Log Out</span>
+            <span style="color:#bbb;font-size:14px">›</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script>
+    SavePlate.guardAuth();
+    document.getElementById('sidebar-root').innerHTML = SavePlate.renderSidebar('settings');
+    document.getElementById('topbar-root').innerHTML  = SavePlate.renderTopbar('Settings');
+    document.getElementById('pname').textContent  = SavePlate.user.name;
+    document.getElementById('pemail').textContent = SavePlate.user.email;
+    function logout(){ SavePlate.clearUser(); location.href='index.html'; }
+  </script>
+</body>
+</html>
