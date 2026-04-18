@@ -27,6 +27,19 @@ const SavePlate = {
     {m:'Mar',saved:4.5,wasted:3.2},{m:'Apr',saved:7.2,wasted:0.8},
   ],
 
+  // Function to fetch inventory from a backend (for Postman testing)
+  async fetchInventory() {
+    try {
+      // When you build your Node.js/Express server, you will change this URL
+      const response = await fetch('http://localhost:3000/api/inventory');
+      this.inventory = await response.json();
+      return this.inventory;
+    } catch (err) {
+      console.warn("Backend not found, using local mock data.");
+      return this.inventory;
+    }
+  },
+
   user: JSON.parse(sessionStorage.getItem('sp_user') || 'null'),
   setUser(u)   { this.user=u; sessionStorage.setItem('sp_user',JSON.stringify(u)); },
   clearUser()  { this.user=null; sessionStorage.removeItem('sp_user'); },

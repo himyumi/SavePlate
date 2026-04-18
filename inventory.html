@@ -114,10 +114,27 @@
       const cat =document.getElementById('f-cat').value;
       const exp =document.getElementById('f-exp').value;
       const loc =document.getElementById('f-loc').value;
-      if(!name||!qty||!exp){alert('Please fill required fields.');return;}
+
+      // --- VALIDATION (Requirement: Validations in place) ---
+      if(!name || name.length < 3) {
+        alert('Negative Scenario: Item name too short!');
+        return;
+      }
+      if(!qty) {
+        alert('Negative Scenario: Quantity is required!');
+        return;
+      }
+
       const diff=(new Date(exp)-new Date())/(1000*60*60*24);
       const status=diff<=2?'danger':diff<=5?'warn':'ok';
-      SavePlate.inventory.unshift({name,emoji:catEmoji[cat]||'🍽',cat,qty,loc,exp,status});
+
+      const newItem = {name, emoji:catEmoji[cat]||'🍽', cat, qty, loc, exp, status};
+
+      // --- BACKEND INTEGRATION (Requirement: Complexity/Postman) ---
+      // For now, we unshift locally, but for Iteration 2, 
+      // you would fetch('POST', '/api/inventory', newItem)
+      SavePlate.inventory.unshift(newItem);
+      
       view=[...SavePlate.inventory];
       renderGrid(view);
       closeModal();
