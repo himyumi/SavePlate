@@ -1,580 +1,746 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>SavePlate – Meal Planning</title>
-  <link rel="stylesheet" href="css/style.css"/>
-  <style>
-    /* ── PAGE LAYOUT ── */
-    .meal-layout {
-      display: grid;
-      grid-template-columns: 1fr 340px;
-      gap: 20px;
-      align-items: start;
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>SavePlate – Meal Planning</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <style>
+      /* ── PAGE LAYOUT ── */
+      .meal-layout {
+        display: grid;
+        grid-template-columns: 1fr 340px;
+        gap: 20px;
+        align-items: start;
+      }
 
-    /* ── CALENDAR CARD ── */
-    .cal-card {
-      background: #fff;
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      overflow: hidden;
-    }
-    .cal-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 16px 20px 12px;
-    }
-    .cal-month {
-      font-size: 18px;
-      font-weight: 700;
-      color: var(--text);
-    }
-    .cal-nav {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .cal-nav-btn {
-      background: none;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      width: 28px; height: 28px;
-      cursor: pointer;
-      font-size: 13px;
-      display: flex; align-items: center; justify-content: center;
-      color: var(--text-muted);
-      transition: .15s;
-    }
-    .cal-nav-btn:hover { background: #f0f0f0; color: var(--text); }
-    .cal-nav-year {
-      font-size: 12px;
-      color: var(--text-muted);
-      font-weight: 500;
-      padding: 0 4px;
-    }
+      /* ── CALENDAR CARD ── */
+      .cal-card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        overflow: hidden;
+      }
+      .cal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 20px 12px;
+      }
+      .cal-month {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text);
+      }
+      .cal-nav {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .cal-nav-btn {
+        background: none;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        width: 28px;
+        height: 28px;
+        cursor: pointer;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-muted);
+        transition: 0.15s;
+      }
+      .cal-nav-btn:hover {
+        background: #f0f0f0;
+        color: var(--text);
+      }
+      .cal-nav-year {
+        font-size: 12px;
+        color: var(--text-muted);
+        font-weight: 500;
+        padding: 0 4px;
+      }
 
-    /* Grid */
-    .cal-grid {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      border-top: 1px solid var(--border);
-    }
-    .cal-day-name {
-      text-align: center;
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      padding: 8px 0 6px;
-      border-bottom: 1px solid var(--border);
-    }
-    .cal-cell {
-      aspect-ratio: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      padding: 6px 4px 4px;
-      border-right: 1px solid #f0f0f0;
-      border-bottom: 1px solid #f0f0f0;
-      cursor: pointer;
-      transition: background .12s;
-      min-height: 52px;
-      position: relative;
-    }
-    .cal-cell:hover { background: #f7f7f7; }
-    .cal-cell.other-month .cal-num { color: #ccc; }
-    .cal-cell.today .cal-num {
-      background: var(--green-btn);
-      color: #fff;
-      border-radius: 50%;
-      width: 24px; height: 24px;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .cal-cell.has-meal::after {
-      content: '';
-      position: absolute;
-      bottom: 5px;
-      width: 6px; height: 6px;
-      background: var(--green-btn);
-      border-radius: 50%;
-    }
-    .cal-num {
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--text);
-      line-height: 24px;
-      text-align: center;
-      min-width: 24px;
-    }
+      /* Grid */
+      .cal-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        border-top: 1px solid var(--border);
+      }
+      .cal-day-name {
+        text-align: center;
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        padding: 8px 0 6px;
+        border-bottom: 1px solid var(--border);
+      }
+      .cal-cell {
+        aspect-ratio: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        padding: 6px 4px 4px;
+        border-right: 1px solid #f0f0f0;
+        border-bottom: 1px solid #f0f0f0;
+        cursor: pointer;
+        transition: background 0.12s;
+        min-height: 52px;
+        position: relative;
+      }
+      .cal-cell:hover {
+        background: #f7f7f7;
+      }
+      .cal-cell.other-month .cal-num {
+        color: #ccc;
+      }
+      .cal-cell.today .cal-num {
+        background: var(--green-btn);
+        color: #fff;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .cal-cell.has-meal::after {
+        content: "";
+        position: absolute;
+        bottom: 5px;
+        width: 6px;
+        height: 6px;
+        background: var(--green-btn);
+        border-radius: 50%;
+      }
+      .cal-num {
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--text);
+        line-height: 24px;
+        text-align: center;
+        min-width: 24px;
+      }
 
-    /* ── MEAL DETAIL CARD ── */
-    .meal-detail-card {
-      background: var(--navy-card);
-      color: #fff;
-      border-radius: 14px;
-      padding: 18px 20px;
-      position: relative;
-    }
-    .mdc-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 14px;
-    }
-    .mdc-title {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 16px;
-      font-weight: 700;
-    }
-    .mdc-close {
-      background: none;
-      border: none;
-      color: rgba(255,255,255,.5);
-      font-size: 18px;
-      cursor: pointer;
-      line-height: 1;
-      transition: color .2s;
-    }
-    .mdc-close:hover { color: #fff; }
+      /* ── MEAL DETAIL CARD ── */
+      .meal-detail-card {
+        background: var(--navy-card);
+        color: #fff;
+        border-radius: 14px;
+        padding: 18px 20px;
+        position: relative;
+      }
+      .mdc-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 14px;
+      }
+      .mdc-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 16px;
+        font-weight: 700;
+      }
+      .mdc-close {
+        background: none;
+        border: none;
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 18px;
+        cursor: pointer;
+        line-height: 1;
+        transition: color 0.2s;
+      }
+      .mdc-close:hover {
+        color: #fff;
+      }
 
-    .meal-entry {
-      background: rgba(255,255,255,.07);
-      border-radius: 10px;
-      padding: 12px 14px;
-      margin-bottom: 10px;
-    }
-    .meal-entry:last-child { margin-bottom: 0; }
-    .meal-entry-top {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 6px;
-    }
-    .meal-type-dot {
-      width: 10px; height: 10px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-    .dot-breakfast { background: #f5a623; }
-    .dot-lunch     { background: #4caf50; }
-    .dot-dinner    { background: #e53935; }
-    .dot-meal      { background: #9ab5cc; }
-    .meal-entry-name { font-size: 14px; font-weight: 700; }
-    .meal-entry-ingr { font-size: 12px; color: #9ab5cc; line-height: 1.5; }
-    .meal-entry-ingr span { color: #cdd9e5; font-weight: 500; }
-    .meal-entry-notes { font-size: 12px; color: #9ab5cc; margin-top: 4px; line-height: 1.4; }
-    .meal-entry-notes span { color: #cdd9e5; font-weight: 500; }
+      .meal-entry {
+        background: rgba(255, 255, 255, 0.07);
+        border-radius: 10px;
+        padding: 12px 14px;
+        margin-bottom: 10px;
+      }
+      .meal-entry:last-child {
+        margin-bottom: 0;
+      }
+      .meal-entry-top {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 6px;
+      }
+      .meal-type-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+      .dot-breakfast {
+        background: #f5a623;
+      }
+      .dot-lunch {
+        background: #4caf50;
+      }
+      .dot-dinner {
+        background: #e53935;
+      }
+      .dot-meal {
+        background: #9ab5cc;
+      }
+      .meal-entry-name {
+        font-size: 14px;
+        font-weight: 700;
+      }
+      .meal-entry-ingr {
+        font-size: 12px;
+        color: #9ab5cc;
+        line-height: 1.5;
+      }
+      .meal-entry-ingr span {
+        color: #cdd9e5;
+        font-weight: 500;
+      }
+      .meal-entry-notes {
+        font-size: 12px;
+        color: #9ab5cc;
+        margin-top: 4px;
+        line-height: 1.4;
+      }
+      .meal-entry-notes span {
+        color: #cdd9e5;
+        font-weight: 500;
+      }
 
-    .mdc-empty {
-      text-align: center;
-      color: #7a9ab5;
-      font-size: 13px;
-      padding: 24px 0;
-    }
+      .mdc-empty {
+        text-align: center;
+        color: #7a9ab5;
+        font-size: 13px;
+        padding: 24px 0;
+      }
 
-    /* ── PLAN MEAL MODAL ── */
-    .plan-modal {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,.45);
-      z-index: 200;
-      align-items: center;
-      justify-content: center;
-    }
-    .plan-modal.open { display: flex; animation: fadeUp .2s; }
-    .plan-modal-box {
-      background: #fff;
-      border-radius: 14px;
-      padding: 26px 28px 24px;
-      width: 420px;
-      max-width: 95vw;
-      box-shadow: 0 24px 64px rgba(0,0,0,.22);
-    }
-    .plan-modal-header {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      margin-bottom: 4px;
-    }
-    .plan-modal-title { font-size: 17px; font-weight: 700; color: var(--text); }
-    .plan-modal-sub   { font-size: 12px; color: var(--text-muted); margin-bottom: 18px; }
-    .plan-close-btn {
-      background: none;
-      border: none;
-      font-size: 18px;
-      cursor: pointer;
-      color: var(--text-muted);
-      line-height: 1;
-    }
-    .plan-close-btn:hover { color: var(--text); }
-    .plan-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .plan-group { margin-bottom: 13px; }
-    .plan-group label {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text-muted);
-      display: block;
-      margin-bottom: 5px;
-    }
-    .plan-group input,
-    .plan-group select,
-    .plan-group textarea {
-      width: 100%;
-      border: 1.5px solid var(--border);
-      border-radius: 8px;
-      padding: 9px 12px;
-      font-size: 13px;
-      font-family: 'DM Sans', sans-serif;
-      outline: none;
-      color: var(--text);
-      background: #fff;
-      resize: none;
-    }
-    .plan-group input:focus,
-    .plan-group select:focus,
-    .plan-group textarea:focus { border-color: var(--navy); }
-    .plan-group input::placeholder,
-    .plan-group textarea::placeholder { color: #bbb; }
-    .plan-group textarea { height: 72px; }
-    .btn-add-meal {
-      width: 100%;
-      background: var(--green-btn);
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      padding: 12px;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      margin-top: 4px;
-      transition: background .2s;
-    }
-    .btn-add-meal:hover { background: #43a047; }
+      /* ── PLAN MEAL MODAL ── */
+      .plan-modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        z-index: 200;
+        align-items: center;
+        justify-content: center;
+      }
+      .plan-modal.open {
+        display: flex;
+        animation: fadeUp 0.2s;
+      }
+      .plan-modal-box {
+        background: #fff;
+        border-radius: 14px;
+        padding: 26px 28px 24px;
+        width: 420px;
+        max-width: 95vw;
+        box-shadow: 0 24px 64px rgba(0, 0, 0, 0.22);
+      }
+      .plan-modal-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        margin-bottom: 4px;
+      }
+      .plan-modal-title {
+        font-size: 17px;
+        font-weight: 700;
+        color: var(--text);
+      }
+      .plan-modal-sub {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-bottom: 18px;
+      }
+      .plan-close-btn {
+        background: none;
+        border: none;
+        font-size: 18px;
+        cursor: pointer;
+        color: var(--text-muted);
+        line-height: 1;
+      }
+      .plan-close-btn:hover {
+        color: var(--text);
+      }
+      .plan-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      .plan-group {
+        margin-bottom: 13px;
+      }
+      .plan-group label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-muted);
+        display: block;
+        margin-bottom: 5px;
+      }
+      .plan-group input,
+      .plan-group select,
+      .plan-group textarea {
+        width: 100%;
+        border: 1.5px solid var(--border);
+        border-radius: 8px;
+        padding: 9px 12px;
+        font-size: 13px;
+        font-family: "DM Sans", sans-serif;
+        outline: none;
+        color: var(--text);
+        background: #fff;
+        resize: none;
+      }
+      .plan-group input:focus,
+      .plan-group select:focus,
+      .plan-group textarea:focus {
+        border-color: var(--navy);
+      }
+      .plan-group input::placeholder,
+      .plan-group textarea::placeholder {
+        color: #bbb;
+      }
+      .plan-group textarea {
+        height: 72px;
+      }
+      .btn-add-meal {
+        width: 100%;
+        background: var(--green-btn);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 12px;
+        font-family: "DM Sans", sans-serif;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        margin-top: 4px;
+        transition: background 0.2s;
+      }
+      .btn-add-meal:hover {
+        background: #43a047;
+      }
 
-    /* title area */
-    .mp-title-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 4px;
-    }
-    .mp-title {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 24px;
-      font-weight: 700;
-    }
-    .mp-title-badge {
-      background: #f0f0f0;
-      border-radius: 6px;
-      padding: 3px 10px;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text-muted);
-      cursor: pointer;
-    }
-  </style>
-</head>
-<body>
-  <div id="sidebar-root"></div>
-  <div class="main-wrap">
-    <div id="topbar-root"></div>
-    <div class="page-content">
-
-      <!-- Title row -->
-      <div class="mp-title-row">
-        <div class="mp-title">
-          Meal Planning
-          <span class="mp-title-badge">▾</span>
+      /* title area */
+      .mp-title-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 4px;
+      }
+      .mp-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 24px;
+        font-weight: 700;
+      }
+      .mp-title-badge {
+        background: #f0f0f0;
+        border-radius: 6px;
+        padding: 3px 10px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-muted);
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="sidebar-root"></div>
+    <div class="main-wrap">
+      <div id="topbar-root"></div>
+      <div class="page-content">
+        <!-- Title row -->
+        <div class="mp-title-row">
+          <div class="mp-title">
+            Meal Planning
+            <span class="mp-title-badge">▾</span>
+          </div>
+          <button class="btn-green" onclick="openPlanModal()">
+            ＋ add meal
+          </button>
         </div>
-        <button class="btn-green" onclick="openPlanModal()">＋ add meal</button>
-      </div>
-      <div class="page-sub">Plan and track your weekly meals</div>
+        <div class="page-sub">Plan and track your weekly meals</div>
 
-      <div class="meal-layout">
+        <div class="meal-layout">
+          <!-- LEFT: Calendar -->
+          <div>
+            <div class="cal-card">
+              <div class="cal-header">
+                <div class="cal-month" id="cal-month-label">March</div>
+                <div class="cal-nav">
+                  <button class="cal-nav-btn" onclick="changeMonth(-1)">
+                    ‹
+                  </button>
+                  <span class="cal-nav-year" id="cal-year-label">2026</span>
+                  <button class="cal-nav-btn" onclick="changeMonth(1)">
+                    ›
+                  </button>
+                </div>
+              </div>
+              <div class="cal-grid" id="cal-grid"></div>
+            </div>
 
-        <!-- LEFT: Calendar -->
-        <div>
-          <div class="cal-card">
-            <div class="cal-header">
-              <div class="cal-month" id="cal-month-label">March</div>
-              <div class="cal-nav">
-                <button class="cal-nav-btn" onclick="changeMonth(-1)">‹</button>
-                <span class="cal-nav-year" id="cal-year-label">2026</span>
-                <button class="cal-nav-btn" onclick="changeMonth(1)">›</button>
+            <!-- Selected Day Meal List (below calendar when day selected) -->
+            <div
+              id="day-meals-panel"
+              style="margin-top: 16px; display: none"
+            ></div>
+          </div>
+
+          <!-- RIGHT: Selected Day Detail Card -->
+          <div>
+            <div class="meal-detail-card" id="meal-detail-card">
+              <div class="mdc-header">
+                <div class="mdc-title">
+                  📅 <span id="mdc-day-title">Monday</span>
+                </div>
+                <button class="mdc-close" onclick="closeDetailCard()">✕</button>
+              </div>
+              <div id="mdc-body">
+                <div class="mdc-empty">
+                  Select a day on the calendar<br />to see planned meals
+                </div>
               </div>
             </div>
-            <div class="cal-grid" id="cal-grid"></div>
-          </div>
-
-          <!-- Selected Day Meal List (below calendar when day selected) -->
-          <div id="day-meals-panel" style="margin-top:16px;display:none"></div>
-        </div>
-
-        <!-- RIGHT: Selected Day Detail Card -->
-        <div>
-          <div class="meal-detail-card" id="meal-detail-card">
-            <div class="mdc-header">
-              <div class="mdc-title">📅 <span id="mdc-day-title">Monday</span></div>
-              <button class="mdc-close" onclick="closeDetailCard()">✕</button>
-            </div>
-            <div id="mdc-body">
-              <div class="mdc-empty">Select a day on the calendar<br>to see planned meals</div>
-            </div>
           </div>
         </div>
-
       </div>
     </div>
-  </div>
 
-  <!-- PLAN A MEAL MODAL -->
-  <div class="plan-modal" id="plan-modal">
-    <div class="plan-modal-box">
-      <div class="plan-modal-header">
-        <div>
-          <div class="plan-modal-title">Plan a Meal</div>
-          <div class="plan-modal-sub">Add a new meal to your weekly plan</div>
+    <!-- PLAN A MEAL MODAL -->
+    <div class="plan-modal" id="plan-modal">
+      <div class="plan-modal-box">
+        <div class="plan-modal-header">
+          <div>
+            <div class="plan-modal-title">Plan a Meal</div>
+            <div class="plan-modal-sub">Add a new meal to your weekly plan</div>
+          </div>
+          <button class="plan-close-btn" onclick="closePlanModal()">✕</button>
         </div>
-        <button class="plan-close-btn" onclick="closePlanModal()">✕</button>
-      </div>
 
-      <div class="plan-row">
+        <div class="plan-row">
+          <div class="plan-group">
+            <label>Day</label>
+            <select id="pm-day">
+              <option value="">Select day</option>
+              <option>Monday</option>
+              <option>Tuesday</option>
+              <option>Wednesday</option>
+              <option>Thursday</option>
+              <option>Friday</option>
+              <option>Saturday</option>
+              <option>Sunday</option>
+            </select>
+          </div>
+          <div class="plan-group">
+            <label>Meal Type</label>
+            <select id="pm-type">
+              <option value="">Select type</option>
+              <option>Breakfast</option>
+              <option>Lunch</option>
+              <option>Dinner</option>
+              <option>Snack</option>
+            </select>
+          </div>
+        </div>
+
         <div class="plan-group">
-          <label>Day</label>
-          <select id="pm-day">
-            <option value="">Select day</option>
-            <option>Monday</option><option>Tuesday</option><option>Wednesday</option>
-            <option>Thursday</option><option>Friday</option><option>Saturday</option><option>Sunday</option>
-          </select>
+          <label>Meal Name</label>
+          <input type="text" id="pm-name" placeholder="e.g. Chicken Stir-fry" />
         </div>
+
         <div class="plan-group">
-          <label>Meal Type</label>
-          <select id="pm-type">
-            <option value="">Select type</option>
-            <option>Breakfast</option><option>Lunch</option><option>Dinner</option><option>Snack</option>
-          </select>
+          <label>Ingredients</label>
+          <textarea
+            id="pm-ingr"
+            placeholder="List the ingredients you'll use..."
+          ></textarea>
         </div>
-      </div>
 
-      <div class="plan-group">
-        <label>Meal Name</label>
-        <input type="text" id="pm-name" placeholder="e.g. Chicken Stir-fry"/>
-      </div>
+        <div class="plan-group">
+          <label>Notes (Optional)</label>
+          <textarea
+            id="pm-notes"
+            placeholder="Any additional notes..."
+            style="height: 56px"
+          ></textarea>
+        </div>
 
-      <div class="plan-group">
-        <label>Ingredients</label>
-        <textarea id="pm-ingr" placeholder="List the ingredients you'll use..."></textarea>
+        <button class="btn-add-meal" onclick="saveMeal()">Add Meal</button>
       </div>
-
-      <div class="plan-group">
-        <label>Notes (Optional)</label>
-        <textarea id="pm-notes" placeholder="Any additional notes..." style="height:56px"></textarea>
-      </div>
-
-      <button class="btn-add-meal" onclick="saveMeal()">Add Meal</button>
     </div>
-  </div>
 
-  <script src="js/data.js"></script>
-  <script>
-    SavePlate.guardAuth();
-    document.getElementById('sidebar-root').innerHTML = SavePlate.renderSidebar('meals');
-    document.getElementById('topbar-root').innerHTML  = SavePlate.renderTopbar('Meal Planning');
+    <script src="js/data.js"></script>
+    <script>
+      SavePlate.guardAuth();
+      document.getElementById("sidebar-root").innerHTML =
+        SavePlate.renderSidebar("meals");
+      document.getElementById("topbar-root").innerHTML =
+        SavePlate.renderTopbar("Meal Planning");
 
-    // ── MEAL DATA ──
-    // Keyed by "YYYY-M-D"
-    const mealData = {};
+      // ── MEAL DATA ──
+      // Keyed by "YYYY-M-D"
+      const mealData = {};
 
-    // Pre-populate with SavePlate.meals (Mon–Sun mapped to current week)
-    const today = new Date();
-    const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-    const shortNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-    const weekStart = new Date(today);
-    weekStart.setDate(today.getDate() - today.getDay() + 1); // Monday
+      // Pre-populate with SavePlate.meals (Mon–Sun mapped to current week)
+      const today = new Date();
+      const dayNames = [
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+      ];
+      const shortNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+      const weekStart = new Date(today);
+      weekStart.setDate(today.getDate() - today.getDay() + 1); // Monday
 
-    // Map Mon–Sun from SavePlate.meals into mealData
-    const spDayMap = {Mon:0,Tue:1,Wed:2,Thu:3,Fri:4,Sat:5,Sun:6};
-    Object.entries(SavePlate.meals).forEach(([abbr, meals]) => {
-      const d = new Date(weekStart);
-      d.setDate(weekStart.getDate() + spDayMap[abbr]);
-      const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-      mealData[key] = meals.map(m => ({
-        type: m.t, name: m.n,
-        ingredients: 'Use what you have in your inventory',
-        notes: ''
-      }));
-    });
-
-    // ── CALENDAR STATE ──
-    let viewYear  = today.getFullYear();
-    let viewMonth = today.getMonth(); // 0-indexed
-    let selectedKey = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
-
-    const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-
-    function dayKey(y, m, d) { return `${y}-${m}-${d}`; }
-
-    function renderCalendar() {
-      document.getElementById('cal-month-label').textContent = monthNames[viewMonth];
-      document.getElementById('cal-year-label').textContent  = viewYear;
-
-      const grid = document.getElementById('cal-grid');
-      const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-      let html = days.map(d=>`<div class="cal-day-name">${d}</div>`).join('');
-
-      const firstDay = new Date(viewYear, viewMonth, 1).getDay();
-      const daysInMonth = new Date(viewYear, viewMonth+1, 0).getDate();
-      const daysInPrev  = new Date(viewYear, viewMonth, 0).getDate();
-
-      // Prev month pad
-      for (let i = firstDay - 1; i >= 0; i--) {
-        const d = daysInPrev - i;
-        const k = dayKey(viewYear, viewMonth-1, d);
-        html += `<div class="cal-cell other-month" onclick="selectDay(${viewYear},${viewMonth-1},${d})">
-          <span class="cal-num">${d}</span>
-        </div>`;
-      }
-
-      // Current month
-      for (let d = 1; d <= daysInMonth; d++) {
-        const k = dayKey(viewYear, viewMonth, d);
-        const isToday    = (viewYear===today.getFullYear() && viewMonth===today.getMonth() && d===today.getDate());
-        const isSelected = k === selectedKey;
-        const hasMeal    = mealData[k] && mealData[k].length > 0;
-        const cls = [
-          'cal-cell',
-          isToday    ? 'today'    : '',
-          isSelected ? 'selected' : '',
-          hasMeal    ? 'has-meal' : '',
-        ].join(' ');
-        html += `<div class="${cls}" onclick="selectDay(${viewYear},${viewMonth},${d})" style="${isSelected?'background:#eef4ff;':''}">
-          <span class="cal-num">${d}</span>
-        </div>`;
-      }
-
-      // Next month pad
-      const totalCells = firstDay + daysInMonth;
-      const remaining  = 42 - totalCells;
-      for (let d = 1; d <= remaining; d++) {
-        html += `<div class="cal-cell other-month" onclick="selectDay(${viewYear},${viewMonth+1},${d})">
-          <span class="cal-num">${d}</span>
-        </div>`;
-      }
-
-      grid.innerHTML = html;
-      renderDetailCard();
-    }
-
-    function changeMonth(delta) {
-      viewMonth += delta;
-      if (viewMonth > 11) { viewMonth = 0;  viewYear++; }
-      if (viewMonth < 0)  { viewMonth = 11; viewYear--; }
-      renderCalendar();
-    }
-
-    function selectDay(y, m, d) {
-      selectedKey = dayKey(y, m, d);
-      viewYear = y; viewMonth = m;
-      renderCalendar();
-    }
-
-    // ── DETAIL CARD ──
-    const dotClass = { Breakfast:'dot-breakfast', Lunch:'dot-lunch', Dinner:'dot-dinner', Snack:'dot-meal', Meal:'dot-meal' };
-
-    function renderDetailCard() {
-      const parts = selectedKey.split('-');
-      const sd = new Date(+parts[0], +parts[1], +parts[2]);
-      const dayLabel = dayNames[sd.getDay()];
-      document.getElementById('mdc-day-title').textContent = dayLabel;
-
-      const meals = mealData[selectedKey] || [];
-      const body  = document.getElementById('mdc-body');
-
-      if (meals.length === 0) {
-        body.innerHTML = `<div class="mdc-empty">No meals planned for ${dayLabel}.<br><br>
-          <span style="color:#9ab5cc;font-size:12px;cursor:pointer" onclick="openPlanModalFor('${dayLabel}')">＋ Add a meal for this day</span>
-        </div>`;
-      } else {
-        body.innerHTML = meals.map((m,i)=>`
-          <div class="meal-entry">
-            <div class="meal-entry-top">
-              <span class="meal-type-dot ${dotClass[m.type]||'dot-meal'}"></span>
-              <span class="meal-entry-name">${m.name}</span>
-            </div>
-            ${m.ingredients ? `<div class="meal-entry-ingr"><span>Ingredients:</span> ${m.ingredients}</div>` : ''}
-            ${m.notes ? `<div class="meal-entry-notes"><span>Notes:</span> ${m.notes}</div>` : ''}
-          </div>`).join('');
-      }
-    }
-
-    function closeDetailCard() {
-      document.getElementById('mdc-body').innerHTML =
-        `<div class="mdc-empty">Select a day on the calendar<br>to see planned meals</div>`;
-      document.getElementById('mdc-day-title').textContent = 'Select a Day';
-      selectedKey = '';
-      renderCalendar();
-    }
-
-    // ── PLAN MODAL ──
-    function openPlanModal() {
-      document.getElementById('plan-modal').classList.add('open');
-    }
-    function openPlanModalFor(dayName) {
-      document.getElementById('pm-day').value = dayName;
-      openPlanModal();
-    }
-    function closePlanModal() {
-      document.getElementById('plan-modal').classList.remove('open');
-    }
-
-    function saveMeal() {
-      const day   = document.getElementById('pm-day').value;
-      const type  = document.getElementById('pm-type').value;
-      const name  = document.getElementById('pm-name').value.trim();
-      const ingr  = document.getElementById('pm-ingr').value.trim();
-      const notes = document.getElementById('pm-notes').value.trim();
-
-      if (!day || !type || !name) { alert('Please fill in Day, Meal Type, and Meal Name.'); return; }
-
-      // Find the date for the selected day name in the current view week
-      const targetDayIdx = dayNames.indexOf(day);
-      const base = new Date(viewYear, viewMonth, 1);
-      // Find first occurrence of that day in the current month view
-      let targetDate = new Date(viewYear, viewMonth, 1);
-      while (targetDate.getDay() !== targetDayIdx) targetDate.setDate(targetDate.getDate() + 1);
-
-      const k = dayKey(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
-      if (!mealData[k]) mealData[k] = [];
-      mealData[k].push({ type, name, ingredients: ingr, notes });
-
-      selectedKey = k;
-      closePlanModal();
-
-      // Reset form
-      ['pm-day','pm-type','pm-name','pm-ingr','pm-notes'].forEach(id => {
-        document.getElementById(id).value = '';
+      // Map Mon–Sun from SavePlate.meals into mealData
+      const spDayMap = {
+        Mon: 0,
+        Tue: 1,
+        Wed: 2,
+        Thu: 3,
+        Fri: 4,
+        Sat: 5,
+        Sun: 6,
+      };
+      Object.entries(SavePlate.meals).forEach(([abbr, meals]) => {
+        const d = new Date(weekStart);
+        d.setDate(weekStart.getDate() + spDayMap[abbr]);
+        const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+        mealData[key] = meals.map((m) => ({
+          type: m.t,
+          name: m.n,
+          ingredients: "Use what you have in your inventory",
+          notes: "",
+        }));
       });
 
+      // ── CALENDAR STATE ──
+      let viewYear = today.getFullYear();
+      let viewMonth = today.getMonth(); // 0-indexed
+      let selectedKey = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
+
+      const monthNames = [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+      ];
+
+      function dayKey(y, m, d) {
+        return `${y}-${m}-${d}`;
+      }
+
+      function renderCalendar() {
+        document.getElementById("cal-month-label").textContent =
+          monthNames[viewMonth];
+        document.getElementById("cal-year-label").textContent = viewYear;
+
+        const grid = document.getElementById("cal-grid");
+        const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+        let html = days
+          .map((d) => `<div class="cal-day-name">${d}</div>`)
+          .join("");
+
+        const firstDay = new Date(viewYear, viewMonth, 1).getDay();
+        const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+        const daysInPrev = new Date(viewYear, viewMonth, 0).getDate();
+
+        // Prev month pad
+        for (let i = firstDay - 1; i >= 0; i--) {
+          const d = daysInPrev - i;
+          const k = dayKey(viewYear, viewMonth - 1, d);
+          html += `<div class="cal-cell other-month" onclick="selectDay(${viewYear},${viewMonth - 1},${d})">
+          <span class="cal-num">${d}</span>
+        </div>`;
+        }
+
+        // Current month
+        for (let d = 1; d <= daysInMonth; d++) {
+          const k = dayKey(viewYear, viewMonth, d);
+          const isToday =
+            viewYear === today.getFullYear() &&
+            viewMonth === today.getMonth() &&
+            d === today.getDate();
+          const isSelected = k === selectedKey;
+          const hasMeal = mealData[k] && mealData[k].length > 0;
+          const cls = [
+            "cal-cell",
+            isToday ? "today" : "",
+            isSelected ? "selected" : "",
+            hasMeal ? "has-meal" : "",
+          ].join(" ");
+          html += `<div class="${cls}" onclick="selectDay(${viewYear},${viewMonth},${d})" style="${isSelected ? "background:#eef4ff;" : ""}">
+          <span class="cal-num">${d}</span>
+        </div>`;
+        }
+
+        // Next month pad
+        const totalCells = firstDay + daysInMonth;
+        const remaining = 42 - totalCells;
+        for (let d = 1; d <= remaining; d++) {
+          html += `<div class="cal-cell other-month" onclick="selectDay(${viewYear},${viewMonth + 1},${d})">
+          <span class="cal-num">${d}</span>
+        </div>`;
+        }
+
+        grid.innerHTML = html;
+        renderDetailCard();
+      }
+
+      function changeMonth(delta) {
+        viewMonth += delta;
+        if (viewMonth > 11) {
+          viewMonth = 0;
+          viewYear++;
+        }
+        if (viewMonth < 0) {
+          viewMonth = 11;
+          viewYear--;
+        }
+        renderCalendar();
+      }
+
+      function selectDay(y, m, d) {
+        selectedKey = dayKey(y, m, d);
+        viewYear = y;
+        viewMonth = m;
+        renderCalendar();
+      }
+
+      // ── DETAIL CARD ──
+      const dotClass = {
+        Breakfast: "dot-breakfast",
+        Lunch: "dot-lunch",
+        Dinner: "dot-dinner",
+        Snack: "dot-meal",
+        Meal: "dot-meal",
+      };
+
+      function renderDetailCard() {
+        const parts = selectedKey.split("-");
+        const sd = new Date(+parts[0], +parts[1], +parts[2]);
+        const dayLabel = dayNames[sd.getDay()];
+        document.getElementById("mdc-day-title").textContent = dayLabel;
+
+        const meals = mealData[selectedKey] || [];
+        const body = document.getElementById("mdc-body");
+
+        if (meals.length === 0) {
+          body.innerHTML = `<div class="mdc-empty">No meals planned for ${dayLabel}.<br><br>
+          <span style="color:#9ab5cc;font-size:12px;cursor:pointer" onclick="openPlanModalFor('${dayLabel}')">＋ Add a meal for this day</span>
+        </div>`;
+        } else {
+          body.innerHTML = meals
+            .map(
+              (m, i) => `
+          <div class="meal-entry">
+            <div class="meal-entry-top">
+              <span class="meal-type-dot ${dotClass[m.type] || "dot-meal"}"></span>
+              <span class="meal-entry-name">${m.name}</span>
+            </div>
+            ${m.ingredients ? `<div class="meal-entry-ingr"><span>Ingredients:</span> ${m.ingredients}</div>` : ""}
+            ${m.notes ? `<div class="meal-entry-notes"><span>Notes:</span> ${m.notes}</div>` : ""}
+          </div>`,
+            )
+            .join("");
+        }
+      }
+
+      function closeDetailCard() {
+        document.getElementById("mdc-body").innerHTML =
+          `<div class="mdc-empty">Select a day on the calendar<br>to see planned meals</div>`;
+        document.getElementById("mdc-day-title").textContent = "Select a Day";
+        selectedKey = "";
+        renderCalendar();
+      }
+
+      // ── PLAN MODAL ──
+      function openPlanModal() {
+        document.getElementById("plan-modal").classList.add("open");
+      }
+      function openPlanModalFor(dayName) {
+        document.getElementById("pm-day").value = dayName;
+        openPlanModal();
+      }
+      function closePlanModal() {
+        document.getElementById("plan-modal").classList.remove("open");
+      }
+
+      function saveMeal() {
+        const day = document.getElementById("pm-day").value;
+        const type = document.getElementById("pm-type").value;
+        const name = document.getElementById("pm-name").value.trim();
+        const ingr = document.getElementById("pm-ingr").value.trim();
+        const notes = document.getElementById("pm-notes").value.trim();
+
+        if (!day || !type || !name) {
+          alert("Please fill in Day, Meal Type, and Meal Name.");
+          return;
+        }
+
+        // Find the date for the selected day name in the current view week
+        const targetDayIdx = dayNames.indexOf(day);
+        const base = new Date(viewYear, viewMonth, 1);
+        // Find first occurrence of that day in the current month view
+        let targetDate = new Date(viewYear, viewMonth, 1);
+        while (targetDate.getDay() !== targetDayIdx)
+          targetDate.setDate(targetDate.getDate() + 1);
+
+        const k = dayKey(
+          targetDate.getFullYear(),
+          targetDate.getMonth(),
+          targetDate.getDate(),
+        );
+        if (!mealData[k]) mealData[k] = [];
+        mealData[k].push({ type, name, ingredients: ingr, notes });
+
+        selectedKey = k;
+        closePlanModal();
+
+        // Reset form
+        ["pm-day", "pm-type", "pm-name", "pm-ingr", "pm-notes"].forEach(
+          (id) => {
+            document.getElementById(id).value = "";
+          },
+        );
+
+        renderCalendar();
+      }
+
+      // Close modal on backdrop click
+      document
+        .getElementById("plan-modal")
+        .addEventListener("click", function (e) {
+          if (e.target === this) closePlanModal();
+        });
+
+      // Init
       renderCalendar();
-    }
-
-    // Close modal on backdrop click
-    document.getElementById('plan-modal').addEventListener('click', function(e){
-      if (e.target === this) closePlanModal();
-    });
-
-    // Init
-    renderCalendar();
-  </script>
-</body>
+    </script>
+  </body>
 </html>

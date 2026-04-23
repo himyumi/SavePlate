@@ -1,86 +1,119 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>SavePlate – Dashboard</title>
-  <link rel="stylesheet" href="css/style.css"/>
-</head>
-<body>
-  <div id="sidebar-root"></div>
-  <div class="main-wrap">
-    <div id="topbar-root"></div>
-    <div class="page-content">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>SavePlate – Dashboard</title>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <div id="sidebar-root"></div>
+    <div class="main-wrap">
+      <div id="topbar-root"></div>
+      <div class="page-content">
+        <!-- STATS -->
+        <div class="stats-row">
+          <div class="stat-tile">
+            <div class="s-label">Total Items</div>
+            <div class="s-val">24</div>
+          </div>
+          <div class="stat-tile">
+            <div class="s-label">Expiring Soon</div>
+            <div class="s-val">5</div>
+          </div>
+          <div class="stat-tile">
+            <div class="s-label">Meal Plans</div>
+            <div class="s-val">3</div>
+          </div>
+          <div class="stat-tile">
+            <div class="s-label">Waste Saved</div>
+            <div class="s-val">12kg</div>
+          </div>
+        </div>
 
-      <!-- STATS -->
-      <div class="stats-row">
-        <div class="stat-tile"><div class="s-label">Total Items</div><div class="s-val">24</div></div>
-        <div class="stat-tile"><div class="s-label">Expiring Soon</div><div class="s-val">5</div></div>
-        <div class="stat-tile"><div class="s-label">Meal Plans</div><div class="s-val">3</div></div>
-        <div class="stat-tile"><div class="s-label">Waste Saved</div><div class="s-val">12kg</div></div>
-      </div>
+        <!-- EXPIRING + MEALS -->
+        <div class="dash-row">
+          <!-- Expiring Soon -->
+          <div class="dash-card">
+            <div class="dash-card-title">⚠️ Expiring Soon</div>
+            <div class="dash-card-sub">Items that need your attention</div>
+            <div id="exp-list"></div>
+          </div>
+          <!-- Upcoming Meals -->
+          <div class="dash-card">
+            <div class="dash-card-title">📅 Upcoming Meals</div>
+            <div class="dash-card-sub">Your planned meals for the week</div>
+            <div class="meal-row">
+              <div class="day-pill">Today</div>
+              <div>
+                <div class="meal-name">Chicken Stir-fry with Spinach</div>
+                <div class="meal-type">Dinner</div>
+              </div>
+            </div>
+            <div class="meal-row">
+              <div class="day-pill">Tomorrow</div>
+              <div>
+                <div class="meal-name">Greek Yogurt Parfait</div>
+                <div class="meal-type">Breakfast</div>
+              </div>
+            </div>
+            <div class="meal-row">
+              <div class="day-pill">Saturday</div>
+              <div>
+                <div class="meal-name">Strawberry Smoothie</div>
+                <div class="meal-type">Breakfast</div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-      <!-- EXPIRING + MEALS -->
-      <div class="dash-row">
-        <!-- Expiring Soon -->
+        <!-- QUICK ACTIONS (full width navy card) -->
         <div class="dash-card">
-          <div class="dash-card-title">⚠️ Expiring Soon</div>
-          <div class="dash-card-sub">Items that need your attention</div>
-          <div id="exp-list"></div>
-        </div>
-        <!-- Upcoming Meals -->
-        <div class="dash-card">
-          <div class="dash-card-title">📅 Upcoming Meals</div>
-          <div class="dash-card-sub">Your planned meals for the week</div>
-          <div class="meal-row">
-            <div class="day-pill">Today</div>
-            <div><div class="meal-name">Chicken Stir-fry with Spinach</div><div class="meal-type">Dinner</div></div>
-          </div>
-          <div class="meal-row">
-            <div class="day-pill">Tomorrow</div>
-            <div><div class="meal-name">Greek Yogurt Parfait</div><div class="meal-type">Breakfast</div></div>
-          </div>
-          <div class="meal-row">
-            <div class="day-pill">Saturday</div>
-            <div><div class="meal-name">Strawberry Smoothie</div><div class="meal-type">Breakfast</div></div>
+          <div class="quick-grid">
+            <button
+              class="quick-btn"
+              onclick="location.href = 'inventory.html'"
+            >
+              <span class="qi">＋</span>Add New Item
+            </button>
+            <button class="quick-btn" onclick="location.href = 'meals.html'">
+              <span class="qi">📅</span>Plan A Meal
+            </button>
+            <button
+              class="quick-btn"
+              onclick="location.href = 'inventory.html'"
+            >
+              <span class="qi">⚠️</span>Check Expiring
+            </button>
           </div>
         </div>
       </div>
-
-      <!-- QUICK ACTIONS (full width navy card) -->
-      <div class="dash-card">
-        <div class="quick-grid">
-          <button class="quick-btn" onclick="location.href='inventory.html'">
-            <span class="qi">＋</span>Add New Item
-          </button>
-          <button class="quick-btn" onclick="location.href='meals.html'">
-            <span class="qi">📅</span>Plan A Meal
-          </button>
-          <button class="quick-btn" onclick="location.href='inventory.html'">
-            <span class="qi">⚠️</span>Check Expiring
-          </button>
-        </div>
-      </div>
-
     </div>
-  </div>
 
-  <script src="js/data.js"></script>
-  <script>
-    SavePlate.guardAuth();
-    document.getElementById('sidebar-root').innerHTML = SavePlate.renderSidebar('dashboard');
-    document.getElementById('topbar-root').innerHTML  = SavePlate.renderTopbar('Dashboard');
+    <script src="js/data.js"></script>
+    <script>
+      SavePlate.guardAuth();
+      document.getElementById("sidebar-root").innerHTML =
+        SavePlate.renderSidebar("dashboard");
+      document.getElementById("topbar-root").innerHTML =
+        SavePlate.renderTopbar("Dashboard");
 
-    // Render expiring items
-    const expiring = SavePlate.inventory.filter(i=>i.status==='danger'||i.status==='warn');
-    document.getElementById('exp-list').innerHTML = expiring.map(i=>`
+      // Render expiring items
+      const expiring = SavePlate.inventory.filter(
+        (i) => i.status === "danger" || i.status === "warn",
+      );
+      document.getElementById("exp-list").innerHTML = expiring
+        .map(
+          (i) => `
       <div class="exp-row">
         <div class="exp-row-icon">${i.emoji}</div>
         <div>
           <div class="exp-row-name">${i.name}</div>
           <div class="exp-row-cat">${i.cat}</div>
         </div>
-      </div>`).join('');
-  </script>
-</body>
+      </div>`,
+        )
+        .join("");
+    </script>
+  </body>
 </html>

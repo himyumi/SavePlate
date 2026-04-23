@@ -1,90 +1,139 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>SavePlate – Inventory</title>
-  <link rel="stylesheet" href="css/style.css"/>
-</head>
-<body>
-  <div id="sidebar-root"></div>
-  <div class="main-wrap">
-    <div id="topbar-root"></div>
-    <div class="page-content">
-
-      <div class="page-header">
-        <div>
-          <div class="page-title">Food Inventory</div>
-          <div class="page-sub">Manage your food items and track expiry dates</div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>SavePlate – Inventory</title>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <div id="sidebar-root"></div>
+    <div class="main-wrap">
+      <div id="topbar-root"></div>
+      <div class="page-content">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Food Inventory</div>
+            <div class="page-sub">
+              Manage your food items and track expiry dates
+            </div>
+          </div>
+          <button class="btn-green" onclick="openModal()">＋ add item</button>
         </div>
-        <button class="btn-green" onclick="openModal()">＋ add item</button>
-      </div>
 
-      <!-- Search + filter -->
-      <div class="search-row">
-        <div class="search-wrap">
-          <span class="search-icon">🔍</span>
-          <input type="text" placeholder="Search...." oninput="filterInv(this.value)" id="search-input"/>
-        </div>
-        <select class="cat-select" onchange="filterCat(this.value)">
-          <option value="">All Categories</option>
-          <option>Dairy</option>
-          <option>Fruits</option>
-          <option>Meat</option>
-          <option>Vegetables</option>
-          <option>Grains</option>
-          <option>Canned</option>
-          <option>Frozen</option>
-          <option>Bakery</option>
-        </select>
-      </div>
-
-      <!-- Card grid -->
-      <div class="inv-grid" id="inv-grid"></div>
-    </div>
-  </div>
-
-  <!-- ADD ITEM MODAL -->
-  <div class="modal-overlay" id="modal">
-    <div class="modal-box">
-      <div class="modal-title">Add Food Item</div>
-      <div class="form-group"><label>Item Name *</label><input type="text" id="f-name" placeholder="e.g. Fresh Milk"/></div>
-      <div class="form-row">
-        <div class="form-group"><label>Quantity *</label><input type="text" id="f-qty" placeholder="e.g. 1 Liter"/></div>
-        <div class="form-group"><label>Category *</label>
-          <select id="f-cat">
-            <option>Dairy</option><option>Fruits</option><option>Meat</option>
-            <option>Vegetables</option><option>Grains</option><option>Canned</option><option>Frozen</option><option>Bakery</option>
+        <!-- Search + filter -->
+        <div class="search-row">
+          <div class="search-wrap">
+            <span class="search-icon">🔍</span>
+            <input
+              type="text"
+              placeholder="Search...."
+              oninput="filterInv(this.value)"
+              id="search-input"
+            />
+          </div>
+          <select class="cat-select" onchange="filterCat(this.value)">
+            <option value="">All Categories</option>
+            <option>Dairy</option>
+            <option>Fruits</option>
+            <option>Meat</option>
+            <option>Vegetables</option>
+            <option>Grains</option>
+            <option>Canned</option>
+            <option>Frozen</option>
+            <option>Bakery</option>
           </select>
         </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group"><label>Expiry Date *</label><input type="date" id="f-exp"/></div>
-        <div class="form-group"><label>Storage Location</label>
-          <select id="f-loc"><option>Fridge</option><option>Pantry</option><option>Freezer</option></select>
-        </div>
-      </div>
-      <div class="form-group"><label>Notes (optional)</label><input type="text" id="f-notes" placeholder="Any remarks..."/></div>
-      <div class="modal-actions">
-        <button class="btn-cancel" onclick="closeModal()">Cancel</button>
-        <button class="btn-navy" style="width:auto;padding:10px 22px" onclick="addItem()">Add Item</button>
+
+        <!-- Card grid -->
+        <div class="inv-grid" id="inv-grid"></div>
       </div>
     </div>
-  </div>
 
-  <script src="js/data.js"></script>
-  <script>
-    SavePlate.guardAuth();
-    document.getElementById('sidebar-root').innerHTML = SavePlate.renderSidebar('inventory');
-    document.getElementById('topbar-root').innerHTML  = SavePlate.renderTopbar('Inventory');
+    <!-- ADD ITEM MODAL -->
+    <div class="modal-overlay" id="modal">
+      <div class="modal-box">
+        <div class="modal-title">Add Food Item</div>
+        <div class="form-group">
+          <label>Item Name *</label
+          ><input type="text" id="f-name" placeholder="e.g. Fresh Milk" />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Quantity *</label
+            ><input type="text" id="f-qty" placeholder="e.g. 1 Liter" />
+          </div>
+          <div class="form-group">
+            <label>Category *</label>
+            <select id="f-cat">
+              <option>Dairy</option>
+              <option>Fruits</option>
+              <option>Meat</option>
+              <option>Vegetables</option>
+              <option>Grains</option>
+              <option>Canned</option>
+              <option>Frozen</option>
+              <option>Bakery</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Expiry Date *</label><input type="date" id="f-exp" />
+          </div>
+          <div class="form-group">
+            <label>Storage Location</label>
+            <select id="f-loc">
+              <option>Fridge</option>
+              <option>Pantry</option>
+              <option>Freezer</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Notes (optional)</label
+          ><input type="text" id="f-notes" placeholder="Any remarks..." />
+        </div>
+        <div class="modal-actions">
+          <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+          <button
+            class="btn-navy"
+            style="width: auto; padding: 10px 22px"
+            onclick="addItem()"
+          >
+            Add Item
+          </button>
+        </div>
+      </div>
+    </div>
 
-    const catEmoji = {Dairy:'🥛',Fruits:'🍎',Meat:'🍗',Vegetables:'🥦',Grains:'🌾',Canned:'🥫',Frozen:'❄️',Bakery:'🍞',Other:'🍽'};
+    <script src="js/data.js"></script>
+    <script>
+      SavePlate.guardAuth();
+      document.getElementById("sidebar-root").innerHTML =
+        SavePlate.renderSidebar("inventory");
+      document.getElementById("topbar-root").innerHTML =
+        SavePlate.renderTopbar("Inventory");
 
-    function renderGrid(data){
-      document.getElementById('inv-grid').innerHTML = data.map((item,i)=>`
+      const catEmoji = {
+        Dairy: "🥛",
+        Fruits: "🍎",
+        Meat: "🍗",
+        Vegetables: "🥦",
+        Grains: "🌾",
+        Canned: "🥫",
+        Frozen: "❄️",
+        Bakery: "🍞",
+        Other: "🍽",
+      };
+
+      function renderGrid(data) {
+        document.getElementById("inv-grid").innerHTML = data
+          .map(
+            (item, i) => `
         <div class="inv-card">
           <div class="inv-card-header">
-            <div class="inv-icon">${catEmoji[item.cat]||'🍽'}</div>
+            <div class="inv-icon">${catEmoji[item.cat] || "🍽"}</div>
             <div>
               <div class="inv-name">${item.name}</div>
               <div class="inv-cat">${item.cat}</div>
@@ -97,34 +146,67 @@
             <span class="inv-row-label">Expires:</span>
             <span class="exp-badge ${item.status}">⏰ ${SavePlate.daysLeft(item.exp)}</span>
           </div>
-          <div class="inv-date">${new Date(item.exp).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</div>
-        </div>`).join('');
-    }
+          <div class="inv-date">${new Date(item.exp).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</div>
+        </div>`,
+          )
+          .join("");
+      }
 
-    let view = [...SavePlate.inventory];
-    function filterInv(q){ view=SavePlate.inventory.filter(i=>i.name.toLowerCase().includes(q.toLowerCase())); renderGrid(view); }
-    function filterCat(c){ view=c?SavePlate.inventory.filter(i=>i.cat===c):[...SavePlate.inventory]; renderGrid(view); }
-    function removeItem(idx){ SavePlate.inventory.splice(idx,1); view=[...SavePlate.inventory]; renderGrid(view); }
+      let view = [...SavePlate.inventory];
+      function filterInv(q) {
+        view = SavePlate.inventory.filter((i) =>
+          i.name.toLowerCase().includes(q.toLowerCase()),
+        );
+        renderGrid(view);
+      }
+      function filterCat(c) {
+        view = c
+          ? SavePlate.inventory.filter((i) => i.cat === c)
+          : [...SavePlate.inventory];
+        renderGrid(view);
+      }
+      function removeItem(idx) {
+        SavePlate.inventory.splice(idx, 1);
+        view = [...SavePlate.inventory];
+        renderGrid(view);
+      }
 
-    function openModal(){ document.getElementById('modal').classList.add('open'); }
-    function closeModal(){ document.getElementById('modal').classList.remove('open'); }
-    function addItem(){
-      const name=document.getElementById('f-name').value.trim();
-      const qty =document.getElementById('f-qty').value.trim();
-      const cat =document.getElementById('f-cat').value;
-      const exp =document.getElementById('f-exp').value;
-      const loc =document.getElementById('f-loc').value;
-      if(!name||!qty||!exp){alert('Please fill required fields.');return;}
-      const diff=(new Date(exp)-new Date())/(1000*60*60*24);
-      const status=diff<=2?'danger':diff<=5?'warn':'ok';
-      SavePlate.inventory.unshift({name,emoji:catEmoji[cat]||'🍽',cat,qty,loc,exp,status});
-      view=[...SavePlate.inventory];
+      function openModal() {
+        document.getElementById("modal").classList.add("open");
+      }
+      function closeModal() {
+        document.getElementById("modal").classList.remove("open");
+      }
+      function addItem() {
+        const name = document.getElementById("f-name").value.trim();
+        const qty = document.getElementById("f-qty").value.trim();
+        const cat = document.getElementById("f-cat").value;
+        const exp = document.getElementById("f-exp").value;
+        const loc = document.getElementById("f-loc").value;
+        if (!name || !qty || !exp) {
+          alert("Please fill required fields.");
+          return;
+        }
+        const diff = (new Date(exp) - new Date()) / (1000 * 60 * 60 * 24);
+        const status = diff <= 2 ? "danger" : diff <= 5 ? "warn" : "ok";
+        SavePlate.inventory.unshift({
+          name,
+          emoji: catEmoji[cat] || "🍽",
+          cat,
+          qty,
+          loc,
+          exp,
+          status,
+        });
+        view = [...SavePlate.inventory];
+        renderGrid(view);
+        closeModal();
+        ["f-name", "f-qty", "f-exp", "f-notes"].forEach(
+          (id) => (document.getElementById(id).value = ""),
+        );
+      }
+
       renderGrid(view);
-      closeModal();
-      ['f-name','f-qty','f-exp','f-notes'].forEach(id=>document.getElementById(id).value='');
-    }
-
-    renderGrid(view);
-  </script>
-</body>
+    </script>
+  </body>
 </html>

@@ -1,69 +1,88 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>SavePlate – Notifications</title>
-  <link rel="stylesheet" href="css/style.css"/>
-</head>
-<body>
-  <div id="sidebar-root"></div>
-  <div class="main-wrap">
-    <div id="topbar-root"></div>
-    <div class="page-content">
-      <div class="page-title">Notifications</div>
-      <div class="page-sub">Stay updated on expiry alerts, donations, and activity</div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>SavePlate – Notifications</title>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <div id="sidebar-root"></div>
+    <div class="main-wrap">
+      <div id="topbar-root"></div>
+      <div class="page-content">
+        <div class="page-title">Notifications</div>
+        <div class="page-sub">
+          Stay updated on expiry alerts, donations, and activity
+        </div>
 
-      <div class="notif-list">
-        <div class="notif-row unread danger">
-          <span class="notif-ico">⚠️</span>
-          <div>
-            <div class="notif-t">Expiry Alert: Fresh Milk</div>
-            <div class="notif-d">Your Fresh Milk (1L) expires tomorrow. Use it or consider donating.</div>
-            <div class="notif-time">2 hours ago</div>
+        <div class="notif-list">
+          <div class="notif-row unread danger">
+            <span class="notif-ico">⚠️</span>
+            <div>
+              <div class="notif-t">Expiry Alert: Fresh Milk</div>
+              <div class="notif-d">
+                Your Fresh Milk (1L) expires tomorrow. Use it or consider
+                donating.
+              </div>
+              <div class="notif-time">2 hours ago</div>
+            </div>
           </div>
-        </div>
-        <div class="notif-row unread success">
-          <span class="notif-ico">✅</span>
-          <div>
-            <div class="notif-t">Donation Claimed</div>
-            <div class="notif-d">Your donated 2kg Basmati Rice has been claimed. Arrange pickup by tomorrow.</div>
-            <div class="notif-time">5 hours ago</div>
+          <div class="notif-row unread success">
+            <span class="notif-ico">✅</span>
+            <div>
+              <div class="notif-t">Donation Claimed</div>
+              <div class="notif-d">
+                Your donated 2kg Basmati Rice has been claimed. Arrange pickup
+                by tomorrow.
+              </div>
+              <div class="notif-time">5 hours ago</div>
+            </div>
           </div>
-        </div>
-        <div class="notif-row unread">
-          <span class="notif-ico">🍽️</span>
-          <div>
-            <div class="notif-t">Meal Plan Reminder</div>
-            <div class="notif-d">You haven't planned meals for the weekend. Use your Broccoli and Eggs soon.</div>
-            <div class="notif-time">Yesterday</div>
+          <div class="notif-row unread">
+            <span class="notif-ico">🍽️</span>
+            <div>
+              <div class="notif-t">Meal Plan Reminder</div>
+              <div class="notif-d">
+                You haven't planned meals for the weekend. Use your Broccoli and
+                Eggs soon.
+              </div>
+              <div class="notif-time">Yesterday</div>
+            </div>
           </div>
-        </div>
-        <div class="notif-row">
-          <span class="notif-ico">🔒</span>
-          <div>
-            <div class="notif-t">Security: New Login Detected</div>
-            <div class="notif-d">A new login to your account was detected. Change your password if it wasn't you.</div>
-            <div class="notif-time">2 days ago</div>
+          <div class="notif-row">
+            <span class="notif-ico">🔒</span>
+            <div>
+              <div class="notif-t">Security: New Login Detected</div>
+              <div class="notif-d">
+                A new login to your account was detected. Change your password
+                if it wasn't you.
+              </div>
+              <div class="notif-time">2 days ago</div>
+            </div>
           </div>
-        </div>
-        <div class="notif-row success">
-          <span class="notif-ico">🌿</span>
-          <div>
-            <div class="notif-t">Monthly Achievement Unlocked!</div>
-            <div class="notif-d">You saved 7.2kg of food this month. You're in the top 20% of SavePlate users!</div>
-            <div class="notif-time">3 days ago</div>
+          <div class="notif-row success">
+            <span class="notif-ico">🌿</span>
+            <div>
+              <div class="notif-t">Monthly Achievement Unlocked!</div>
+              <div class="notif-d">
+                You saved 7.2kg of food this month. You're in the top 20% of
+                SavePlate users!
+              </div>
+              <div class="notif-time">3 days ago</div>
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <script src="js/data.js"></script>
-  <script>
-    SavePlate.guardAuth();
-    document.getElementById('sidebar-root').innerHTML = SavePlate.renderSidebar('');
-    document.getElementById('topbar-root').innerHTML  = SavePlate.renderTopbar('Notifications');
-  </script>
-</body>
+    <script src="js/data.js"></script>
+    <script>
+      SavePlate.guardAuth();
+      document.getElementById("sidebar-root").innerHTML =
+        SavePlate.renderSidebar("");
+      document.getElementById("topbar-root").innerHTML =
+        SavePlate.renderTopbar("Notifications");
+    </script>
+  </body>
 </html>
