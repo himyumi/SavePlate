@@ -31,15 +31,12 @@
           </div>
         </div>
 
-        <!-- EXPIRING + MEALS -->
         <div class="dash-row">
-          <!-- Expiring Soon -->
           <div class="dash-card">
             <div class="dash-card-title">⚠️ Expiring Soon</div>
             <div class="dash-card-sub">Items that need your attention</div>
             <div id="exp-list"></div>
           </div>
-          <!-- Upcoming Meals -->
           <div class="dash-card">
             <div class="dash-card-title">📅 Upcoming Meals</div>
             <div class="dash-card-sub">Your planned meals for the week</div>
@@ -67,14 +64,13 @@
           </div>
         </div>
 
-        <!-- QUICK ACTIONS (full width navy card) -->
         <div class="dash-card">
           <div class="quick-grid">
             <button
               class="quick-btn"
               onclick="location.href = 'inventory.html'"
             >
-              <span class="qi">＋</span>Add New Item
+              <span class="qi">+</span>Add New Item
             </button>
             <button class="quick-btn" onclick="location.href = 'meals.html'">
               <span class="qi">📅</span>Plan A Meal
@@ -98,7 +94,6 @@
       document.getElementById("topbar-root").innerHTML =
         SavePlate.renderTopbar("Dashboard");
 
-      // Render expiring items
       const expiring = SavePlate.inventory.filter(
         (i) => i.status === "danger" || i.status === "warn",
       );

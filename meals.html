@@ -6,7 +6,6 @@
     <title>SavePlate – Meal Planning</title>
     <link rel="stylesheet" href="css/style.css" />
     <style>
-      /* ── PAGE LAYOUT ── */
       .meal-layout {
         display: grid;
         grid-template-columns: 1fr 340px;
@@ -14,7 +13,6 @@
         align-items: start;
       }
 
-      /* ── CALENDAR CARD ── */
       .cal-card {
         background: #fff;
         border: 1px solid var(--border);
@@ -125,7 +123,6 @@
         min-width: 24px;
       }
 
-      /* ── MEAL DETAIL CARD ── */
       .meal-detail-card {
         background: var(--navy-card);
         color: #fff;
@@ -223,7 +220,6 @@
         padding: 24px 0;
       }
 
-      /* ── PLAN MEAL MODAL ── */
       .plan-modal {
         display: none;
         position: fixed;
@@ -331,7 +327,6 @@
         background: #43a047;
       }
 
-      /* title area */
       .mp-title-row {
         display: flex;
         align-items: center;
@@ -345,15 +340,6 @@
         font-size: 24px;
         font-weight: 700;
       }
-      .mp-title-badge {
-        background: #f0f0f0;
-        border-radius: 6px;
-        padding: 3px 10px;
-        font-size: 12px;
-        font-weight: 600;
-        color: var(--text-muted);
-        cursor: pointer;
-      }
     </style>
   </head>
   <body>
@@ -361,14 +347,12 @@
     <div class="main-wrap">
       <div id="topbar-root"></div>
       <div class="page-content">
-        <!-- Title row -->
         <div class="mp-title-row">
           <div class="mp-title">
             Meal Planning
-            <span class="mp-title-badge">▾</span>
           </div>
           <button class="btn-green" onclick="openPlanModal()">
-            ＋ add meal
+            + add meal
           </button>
         </div>
         <div class="page-sub">Plan and track your weekly meals</div>
@@ -392,14 +376,12 @@
               <div class="cal-grid" id="cal-grid"></div>
             </div>
 
-            <!-- Selected Day Meal List (below calendar when day selected) -->
             <div
               id="day-meals-panel"
               style="margin-top: 16px; display: none"
             ></div>
           </div>
 
-          <!-- RIGHT: Selected Day Detail Card -->
           <div>
             <div class="meal-detail-card" id="meal-detail-card">
               <div class="mdc-header">
@@ -419,7 +401,6 @@
       </div>
     </div>
 
-    <!-- PLAN A MEAL MODAL -->
     <div class="plan-modal" id="plan-modal">
       <div class="plan-modal-box">
         <div class="plan-modal-header">
@@ -490,11 +471,8 @@
       document.getElementById("topbar-root").innerHTML =
         SavePlate.renderTopbar("Meal Planning");
 
-      // ── MEAL DATA ──
-      // Keyed by "YYYY-M-D"
       const mealData = {};
 
-      // Pre-populate with SavePlate.meals (Mon–Sun mapped to current week)
       const today = new Date();
       const dayNames = [
         "Sunday",
@@ -531,9 +509,8 @@
         }));
       });
 
-      // ── CALENDAR STATE ──
       let viewYear = today.getFullYear();
-      let viewMonth = today.getMonth(); // 0-indexed
+      let viewMonth = today.getMonth();
       let selectedKey = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
 
       const monthNames = [
@@ -570,7 +547,6 @@
         const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
         const daysInPrev = new Date(viewYear, viewMonth, 0).getDate();
 
-        // Prev month pad
         for (let i = firstDay - 1; i >= 0; i--) {
           const d = daysInPrev - i;
           const k = dayKey(viewYear, viewMonth - 1, d);
@@ -579,7 +555,6 @@
         </div>`;
         }
 
-        // Current month
         for (let d = 1; d <= daysInMonth; d++) {
           const k = dayKey(viewYear, viewMonth, d);
           const isToday =
@@ -599,7 +574,6 @@
         </div>`;
         }
 
-        // Next month pad
         const totalCells = firstDay + daysInMonth;
         const remaining = 42 - totalCells;
         for (let d = 1; d <= remaining; d++) {
@@ -632,7 +606,6 @@
         renderCalendar();
       }
 
-      // ── DETAIL CARD ──
       const dotClass = {
         Breakfast: "dot-breakfast",
         Lunch: "dot-lunch",
@@ -679,7 +652,6 @@
         renderCalendar();
       }
 
-      // ── PLAN MODAL ──
       function openPlanModal() {
         document.getElementById("plan-modal").classList.add("open");
       }
@@ -703,10 +675,8 @@
           return;
         }
 
-        // Find the date for the selected day name in the current view week
         const targetDayIdx = dayNames.indexOf(day);
         const base = new Date(viewYear, viewMonth, 1);
-        // Find first occurrence of that day in the current month view
         let targetDate = new Date(viewYear, viewMonth, 1);
         while (targetDate.getDay() !== targetDayIdx)
           targetDate.setDate(targetDate.getDate() + 1);
@@ -722,7 +692,6 @@
         selectedKey = k;
         closePlanModal();
 
-        // Reset form
         ["pm-day", "pm-type", "pm-name", "pm-ingr", "pm-notes"].forEach(
           (id) => {
             document.getElementById(id).value = "";
@@ -732,14 +701,12 @@
         renderCalendar();
       }
 
-      // Close modal on backdrop click
       document
         .getElementById("plan-modal")
         .addEventListener("click", function (e) {
           if (e.target === this) closePlanModal();
         });
 
-      // Init
       renderCalendar();
     </script>
   </body>
