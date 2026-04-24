@@ -139,6 +139,7 @@ const SavePlate = {
       { id: "dashboard", label: "Dashboard", href: "dashboard.html" },
       { id: "meals", label: "Meal Planning", href: "meals.html" },
       { id: "inventory", label: "Inventory", href: "inventory.html" },
+      { id: "browse", label: "Browse Donations", href: "browse.html" }, // Add this
       { id: "settings", label: "Settings", href: "settings.html" },
     ];
     return `
