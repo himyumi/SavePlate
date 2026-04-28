@@ -5,62 +5,83 @@
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
     <title>SavePlate – Sign Up</title>
     <link rel="stylesheet" href="css/style.css" />
+    <style>
+      .field-error { color: var(--red); font-size: 11px; margin-top: -8px; margin-bottom: 8px; display: none; text-align: left; }
+      .auth-input.invalid { border-color: var(--red); }
+      .auth-input.valid   { border-color: #4caf50; }
+    </style>
   </head>
   <body>
     <div class="auth-page">
       <div class="auth-card">
-        <span class="auth-logo"
-          ><img src="images/Logo.png" alt="SavePlate Logo"
-        /></span>
+        <span class="auth-logo"><img src="images/Logo.png" alt="SavePlate Logo" /></span>
         <div class="auth-title">Create Account</div>
         <div class="auth-sub">Join SavePlate today</div>
-        <label class="auth-field-label">Name</label>
-        <input class="auth-input" type="text" id="name" placeholder="Name" />
+
+        <label class="auth-field-label">Full Name</label>
+        <input class="auth-input" type="text" id="name" placeholder="Your full name" oninput="clearErr('name')"/>
+        <div class="field-error" id="name-err">Full name is required.</div>
+
         <label class="auth-field-label">Email</label>
-        <input
-          class="auth-input"
-          type="email"
-          id="email"
-          placeholder="your@email.com"
-        />
+        <input class="auth-input" type="email" id="email" placeholder="you@email.com" oninput="validateEmailLive()"/>
+        <div class="field-error" id="email-err">Please enter a valid email address (must contain @).</div>
+
         <label class="auth-field-label">Password</label>
-        <input
-          class="auth-input"
-          type="password"
-          id="pass"
-          placeholder="••••••••"
-        />
+        <input class="auth-input" type="password" id="pass" placeholder="Min. 6 characters" oninput="clearErr('pass')"/>
+        <div class="field-error" id="pass-err">Password must be at least 6 characters.</div>
+
+        <label class="auth-field-label">Confirm Password</label>
+        <input class="auth-input" type="password" id="pass2" placeholder="Re-enter password" oninput="clearErr('pass2')"/>
+        <div class="field-error" id="pass2-err">Passwords do not match.</div>
+
         <a class="auth-link" href="login.html">Already have an account?</a>
         <button class="btn-navy" onclick="doSignup()">Sign Up</button>
-        <p
-          id="err"
-          style="
-            color: var(--red);
-            font-size: 12px;
-            margin-top: 10px;
-            display: none;
-          "
-        >
-          Please fill in all fields.
-        </p>
       </div>
     </div>
+
     <script src="js/data.js"></script>
     <script>
-      function doSignup() {
-        const n = document.getElementById("name").value.trim();
-        const e = document.getElementById("email").value.trim();
-        const p = document.getElementById("pass").value.trim();
-        if (!n || !e || !p) {
-          document.getElementById("err").style.display = "block";
-          return;
-        }
-        SavePlate.setUser({ name: n, email: e });
-        location.href = "dashboard.html";
+      function clearErr(field) {
+        document.getElementById(field + '-err').style.display = 'none';
+        document.getElementById(field).classList.remove('invalid');
       }
-      document.addEventListener("keydown", (ev) => {
-        if (ev.key === "Enter") doSignup();
-      });
+      function showErr(field, msg) {
+        const el = document.getElementById(field + '-err');
+        if (msg) el.textContent = msg;
+        el.style.display = 'block';
+        document.getElementById(field).classList.add('invalid');
+        document.getElementById(field).classList.remove('valid');
+      }
+      function validateEmailLive() {
+        const e  = document.getElementById('email').value.trim();
+        const el = document.getElementById('email');
+        document.getElementById('email-err').style.display = 'none';
+        el.classList.remove('invalid', 'valid');
+        if (e.length > 3) {
+          if (SavePlate.validEmail(e)) el.classList.add('valid');
+          else el.classList.add('invalid');
+        }
+      }
+
+      function doSignup() {
+        const name  = document.getElementById('name').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const pass  = document.getElementById('pass').value;
+        const pass2 = document.getElementById('pass2').value;
+        let ok = true;
+
+        if (!name)  { showErr('name',  'Full name is required.'); ok = false; }
+        if (!email) { showErr('email', 'Email is required.'); ok = false; }
+        else if (!SavePlate.validEmail(email)) { showErr('email', 'Please enter a valid email address (must contain @).'); ok = false; }
+        if (pass.length < 6) { showErr('pass',  'Password must be at least 6 characters.'); ok = false; }
+        if (pass !== pass2)  { showErr('pass2', 'Passwords do not match.'); ok = false; }
+
+        if (!ok) return;
+        SavePlate.setUser({ name, email });
+        location.href = 'dashboard.html';
+      }
+
+      document.addEventListener('keydown', ev => { if (ev.key === 'Enter') doSignup(); });
     </script>
   </body>
 </html>

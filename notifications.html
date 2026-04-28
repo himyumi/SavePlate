@@ -5,84 +5,96 @@
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
     <title>SavePlate – Notifications</title>
     <link rel="stylesheet" href="css/style.css" />
+    <style>
+      .notif-toolbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
+      .btn-text { background:none; border:none; color:var(--navy); font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600; cursor:pointer; padding:6px 10px; border-radius:6px; transition:.2s; }
+      .btn-text:hover { background:#f0f0f0; }
+      .btn-text.red { color:var(--red); }
+      .notif-list  { display:flex; flex-direction:column; gap:10px; }
+      .notif-row   { display:flex; gap:12px; align-items:flex-start; background:#f9f9f9; border:1px solid var(--border); border-radius:12px; padding:14px 16px; border-left:4px solid var(--border); position:relative; }
+      .notif-row.unread  { border-left-color:var(--navy); background:#f0f4ff; }
+      .notif-row.danger  { border-left-color:var(--red); }
+      .notif-row.success { border-left-color:var(--green); }
+      .notif-ico  { font-size:22px; flex-shrink:0; }
+      .notif-t    { font-size:14px; font-weight:600; padding-right:28px; }
+      .notif-d    { font-size:13px; color:var(--text-muted); margin-top:2px; }
+      .notif-time { font-size:11px; color:var(--text-muted); margin-top:5px; }
+      .notif-del  { position:absolute; top:12px; right:12px; background:none; border:none; color:#ccc; font-size:15px; cursor:pointer; transition:.2s; }
+      .notif-del:hover { color:var(--red); }
+      .unread-dot { width:8px; height:8px; background:var(--navy); border-radius:50%; flex-shrink:0; margin-top:6px; }
+      .empty-state { text-align:center; padding:60px 20px; color:var(--text-muted); }
+    </style>
   </head>
   <body>
     <div id="sidebar-root"></div>
     <div class="main-wrap">
       <div id="topbar-root"></div>
       <div class="page-content">
-        <div class="page-title">Notifications</div>
-        <div class="page-sub">
-          Stay updated on expiry alerts, donations, and activity
+
+        <div class="notif-toolbar">
+          <div>
+            <div class="page-title" style="margin-bottom:0">Notifications</div>
+            <div style="font-size:13px;color:var(--text-muted);margin-top:2px" id="unread-label"></div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn-text" onclick="markAll()">✓ Mark all read</button>
+            <button class="btn-text red" onclick="clearAll()">🗑 Clear all</button>
+          </div>
         </div>
 
-        <div class="notif-list">
-          <div class="notif-row unread danger">
-            <span class="notif-ico">⚠️</span>
-            <div>
-              <div class="notif-t">Expiry Alert: Fresh Milk</div>
-              <div class="notif-d">
-                Your Fresh Milk (1L) expires tomorrow. Use it or consider
-                donating.
-              </div>
-              <div class="notif-time">2 hours ago</div>
-            </div>
-          </div>
-          <div class="notif-row unread success">
-            <span class="notif-ico">✅</span>
-            <div>
-              <div class="notif-t">Donation Claimed</div>
-              <div class="notif-d">
-                Your donated 2kg Basmati Rice has been claimed. Arrange pickup
-                by tomorrow.
-              </div>
-              <div class="notif-time">5 hours ago</div>
-            </div>
-          </div>
-          <div class="notif-row unread">
-            <span class="notif-ico">🍽️</span>
-            <div>
-              <div class="notif-t">Meal Plan Reminder</div>
-              <div class="notif-d">
-                You haven't planned meals for the weekend. Use your Broccoli and
-                Eggs soon.
-              </div>
-              <div class="notif-time">Yesterday</div>
-            </div>
-          </div>
-          <div class="notif-row">
-            <span class="notif-ico">🔒</span>
-            <div>
-              <div class="notif-t">Security: New Login Detected</div>
-              <div class="notif-d">
-                A new login to your account was detected. Change your password
-                if it wasn't you.
-              </div>
-              <div class="notif-time">2 days ago</div>
-            </div>
-          </div>
-          <div class="notif-row success">
-            <span class="notif-ico">🌿</span>
-            <div>
-              <div class="notif-t">Monthly Achievement Unlocked!</div>
-              <div class="notif-d">
-                You saved 7.2kg of food this month. You're in the top 20% of
-                SavePlate users!
-              </div>
-              <div class="notif-time">3 days ago</div>
-            </div>
-          </div>
-        </div>
+        <div class="notif-list" id="notif-list"></div>
       </div>
     </div>
 
     <script src="js/data.js"></script>
     <script>
       SavePlate.guardAuth();
-      document.getElementById("sidebar-root").innerHTML =
-        SavePlate.renderSidebar("");
-      document.getElementById("topbar-root").innerHTML =
-        SavePlate.renderTopbar("Notifications");
+      document.getElementById('sidebar-root').innerHTML = SavePlate.renderSidebar('');
+      document.getElementById('topbar-root').innerHTML  = SavePlate.renderTopbar('Notifications');
+
+      function render() {
+        const list   = SavePlate.notifications;
+        const unread = list.filter(n => !n.read).length;
+        document.getElementById('unread-label').textContent =
+          unread > 0 ? `${unread} unread notification${unread>1?'s':''}` : 'All caught up!';
+
+        if (!list.length) {
+          document.getElementById('notif-list').innerHTML =
+            `<div class="empty-state"><div style="font-size:52px;margin-bottom:12px">🔔</div><div>No notifications</div></div>`;
+          return;
+        }
+        document.getElementById('notif-list').innerHTML = list.map(n => `
+          <div class="notif-row ${n.read?'':' unread'} ${n.type||''}">
+            <span class="notif-ico">${n.icon}</span>
+            <div style="flex:1">
+              <div class="notif-t">${n.title}</div>
+              <div class="notif-d">${n.desc}</div>
+              <div class="notif-time">${n.time}</div>
+            </div>
+            ${!n.read?'<span class="unread-dot"></span>':''}
+            <button class="notif-del" onclick="deleteNotif('${n.id}')" title="Delete">✕</button>
+          </div>`).join('');
+      }
+
+      function markAll() {
+        SavePlate.markAllRead();
+        document.getElementById('topbar-root').innerHTML = SavePlate.renderTopbar('Notifications');
+        render();
+        SavePlate.toast('All notifications marked as read.');
+      }
+      function clearAll() {
+        if (!confirm('Clear all notifications?')) return;
+        SavePlate.notifications = [];
+        document.getElementById('topbar-root').innerHTML = SavePlate.renderTopbar('Notifications');
+        render();
+      }
+      function deleteNotif(id) {
+        SavePlate.deleteNotif(id);
+        document.getElementById('topbar-root').innerHTML = SavePlate.renderTopbar('Notifications');
+        render();
+      }
+
+      render();
     </script>
   </body>
 </html>

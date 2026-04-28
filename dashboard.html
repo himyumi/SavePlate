@@ -11,104 +11,92 @@
     <div class="main-wrap">
       <div id="topbar-root"></div>
       <div class="page-content">
-        <!-- STATS -->
+
+        <!-- LIVE STATS -->
         <div class="stats-row">
-          <div class="stat-tile">
-            <div class="s-label">Total Items</div>
-            <div class="s-val">24</div>
-          </div>
-          <div class="stat-tile">
-            <div class="s-label">Expiring Soon</div>
-            <div class="s-val">5</div>
-          </div>
-          <div class="stat-tile">
-            <div class="s-label">Meal Plans</div>
-            <div class="s-val">3</div>
-          </div>
-          <div class="stat-tile">
-            <div class="s-label">Waste Saved</div>
-            <div class="s-val">12kg</div>
-          </div>
+          <div class="stat-tile"><div class="s-label">Total Items</div><div class="s-val" id="stat-total">–</div></div>
+          <div class="stat-tile"><div class="s-label">Expiring Soon</div><div class="s-val" id="stat-exp">–</div></div>
+          <div class="stat-tile"><div class="s-label">Meal Plans</div><div class="s-val" id="stat-meals">–</div></div>
+          <div class="stat-tile"><div class="s-label">Waste Saved</div><div class="s-val" id="stat-saved">–</div></div>
         </div>
 
         <div class="dash-row">
+          <!-- Expiring Soon (live) -->
           <div class="dash-card">
             <div class="dash-card-title">⚠️ Expiring Soon</div>
             <div class="dash-card-sub">Items that need your attention</div>
             <div id="exp-list"></div>
           </div>
+          <!-- Upcoming Meals (live) -->
           <div class="dash-card">
             <div class="dash-card-title">📅 Upcoming Meals</div>
             <div class="dash-card-sub">Your planned meals for the week</div>
-            <div class="meal-row">
-              <div class="day-pill">Today</div>
-              <div>
-                <div class="meal-name">Chicken Stir-fry with Spinach</div>
-                <div class="meal-type">Dinner</div>
-              </div>
-            </div>
-            <div class="meal-row">
-              <div class="day-pill">Tomorrow</div>
-              <div>
-                <div class="meal-name">Greek Yogurt Parfait</div>
-                <div class="meal-type">Breakfast</div>
-              </div>
-            </div>
-            <div class="meal-row">
-              <div class="day-pill">Saturday</div>
-              <div>
-                <div class="meal-name">Strawberry Smoothie</div>
-                <div class="meal-type">Breakfast</div>
-              </div>
-            </div>
+            <div id="meal-list"></div>
           </div>
         </div>
 
+        <!-- Quick Actions -->
         <div class="dash-card">
           <div class="quick-grid">
-            <button
-              class="quick-btn"
-              onclick="location.href = 'inventory.html'"
-            >
+            <button class="quick-btn" onclick="location.href='inventory.html'">
               <span class="qi">+</span>Add New Item
             </button>
-            <button class="quick-btn" onclick="location.href = 'meals.html'">
+            <button class="quick-btn" onclick="location.href='meals.html'">
               <span class="qi">📅</span>Plan A Meal
             </button>
-            <button
-              class="quick-btn"
-              onclick="location.href = 'inventory.html'"
-            >
-              <span class="qi">⚠️</span>Check Expiring
+            <button class="quick-btn" onclick="location.href='browse.html'">
+              <span class="qi">🤝</span>Browse Donations
             </button>
           </div>
         </div>
+
       </div>
     </div>
 
     <script src="js/data.js"></script>
     <script>
       SavePlate.guardAuth();
-      document.getElementById("sidebar-root").innerHTML =
-        SavePlate.renderSidebar("dashboard");
-      document.getElementById("topbar-root").innerHTML =
-        SavePlate.renderTopbar("Dashboard");
+      document.getElementById('sidebar-root').innerHTML = SavePlate.renderSidebar('dashboard');
+      document.getElementById('topbar-root').innerHTML  = SavePlate.renderTopbar('Dashboard');
 
-      const expiring = SavePlate.inventory.filter(
-        (i) => i.status === "danger" || i.status === "warn",
-      );
-      document.getElementById("exp-list").innerHTML = expiring
-        .map(
-          (i) => `
-      <div class="exp-row">
-        <div class="exp-row-icon">${i.emoji}</div>
-        <div>
-          <div class="exp-row-name">${i.name}</div>
-          <div class="exp-row-cat">${i.cat}</div>
-        </div>
-      </div>`,
-        )
-        .join("");
+      // Live stats
+      const s = SavePlate.stats;
+      document.getElementById('stat-total').textContent = s.totalItems;
+      document.getElementById('stat-exp').textContent   = s.expiringSoon;
+      document.getElementById('stat-meals').textContent = s.mealPlans;
+      document.getElementById('stat-saved').textContent = s.wasteSaved;
+
+      // Expiring items
+      const expiring = SavePlate.inventory.filter(i => i.status==='danger'||i.status==='warn');
+      document.getElementById('exp-list').innerHTML = expiring.length
+        ? expiring.slice(0,5).map(i=>`
+            <div class="exp-row">
+              <div class="exp-row-icon">${i.emoji||SavePlate.catEmoji[i.cat]||'🍽️'}</div>
+              <div>
+                <div class="exp-row-name">${i.name}</div>
+                <div class="exp-row-cat">${i.cat} · ${SavePlate.daysLeft(i.exp)}</div>
+              </div>
+            </div>`).join('')
+        : '<div style="color:#9ab5cc;font-size:13px;padding:12px 0">No items expiring soon 🎉</div>';
+
+      // Upcoming meals
+      const today = new Date();
+      const upcoming = SavePlate.meals
+        .filter(m => { const d=new Date(m.date); return (d-today)/(864e5) >= -1 && (d-today)/(864e5) <= 7; })
+        .sort((a,b) => new Date(a.date)-new Date(b.date))
+        .slice(0,4);
+      const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+      document.getElementById('meal-list').innerHTML = upcoming.length
+        ? upcoming.map(m=>{
+            const d = new Date(m.date);
+            const diff = Math.ceil((d-today)/864e5);
+            const label = diff<=0?'Today':diff===1?'Tomorrow':dayNames[d.getDay()];
+            return `<div class="meal-row">
+              <div class="day-pill">${label}</div>
+              <div><div class="meal-name">${m.name}</div><div class="meal-type">${m.type}</div></div>
+            </div>`;
+          }).join('')
+        : '<div style="color:#9ab5cc;font-size:13px;padding:12px 0">No upcoming meals. <a href="meals.html" style="color:#66bb6a">+ Plan one</a></div>';
     </script>
   </body>
 </html>

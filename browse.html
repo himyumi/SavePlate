@@ -6,53 +6,19 @@
     <title>SavePlate – Browse Donations</title>
     <link rel="stylesheet" href="css/style.css" />
     <style>
-      .donate-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-        gap: 14px;
-      }
-      .donate-card {
-        background: var(--navy-card);
-        color: #fff;
-        border-radius: 14px;
-        padding: 18px;
-        transition: transform 0.2s;
-      }
-      .donate-card:hover {
-        transform: translateY(-2px);
-      }
-      .dc-emoji {
-        font-size: 38px;
-        margin-bottom: 12px;
-        display: block;
-      }
-      .dc-name {
-        font-size: 15px;
-        font-weight: 700;
-        margin-bottom: 8px;
-      }
-      .dc-row {
-        font-size: 12px;
-        color: #9ab5cc;
-        margin-bottom: 4px;
-      }
-      .dc-btn {
-        margin-top: 14px;
-        width: 100%;
-        background: rgba(255, 255, 255, 0.1);
-        border: 1.5px solid rgba(255, 255, 255, 0.2);
-        color: #fff;
-        border-radius: 8px;
-        padding: 8px;
-        font-family: "DM Sans", sans-serif;
-        font-size: 13px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: 0.2s;
-      }
-      .dc-btn:hover {
-        background: rgba(255, 255, 255, 0.2);
-      }
+      .donate-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:14px; }
+      .donate-card { background:var(--navy-card); color:#fff; border-radius:14px; padding:18px; transition:transform .2s; position:relative; }
+      .donate-card:hover { transform:translateY(-2px); }
+      .donate-card.claimed { opacity:.55; }
+      .dc-emoji  { font-size:38px; margin-bottom:12px; display:block; }
+      .dc-name   { font-size:15px; font-weight:700; margin-bottom:8px; }
+      .dc-row    { font-size:12px; color:#9ab5cc; margin-bottom:4px; }
+      .dc-btn    { margin-top:14px; width:100%; background:rgba(255,255,255,.1); border:1.5px solid rgba(255,255,255,.2); color:#fff; border-radius:8px; padding:8px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600; cursor:pointer; transition:.2s; }
+      .dc-btn:hover:not(:disabled) { background:rgba(255,255,255,.2); }
+      .dc-btn:disabled { opacity:.5; cursor:not-allowed; background:rgba(76,175,80,.2); border-color:rgba(76,175,80,.4); color:#a5d6a7; }
+      .claimed-badge { position:absolute; top:12px; right:12px; background:#27ae60; color:#fff; font-size:10px; font-weight:700; border-radius:20px; padding:2px 8px; }
+      .empty-state { grid-column:1/-1; text-align:center; padding:48px; color:var(--text-muted); }
+      .empty-state .ei { font-size:48px; margin-bottom:12px; }
     </style>
   </head>
   <body>
@@ -60,66 +26,128 @@
     <div class="main-wrap">
       <div id="topbar-root"></div>
       <div class="page-content">
+
         <div class="page-header">
           <div>
             <div class="page-title">Browse Donations</div>
-            <div class="page-sub">
-              Claim available food from community members near you
-            </div>
+            <div class="page-sub">Claim available food from community members near you</div>
           </div>
+          <button class="btn-green" onclick="openPostModal()">＋ Post a Donation</button>
         </div>
+
         <div class="search-row">
           <div class="search-wrap">
             <span class="search-icon">🔍</span>
-            <input
-              type="text"
-              placeholder="Search listings..."
-              oninput="filter(this.value)"
-            />
+            <input type="text" placeholder="Search listings..." oninput="applyFilter(this.value)"/>
           </div>
-          <select class="cat-select">
-            <option>📍 All Locations</option>
-            <option>Kuala Lumpur</option>
-            <option>Petaling Jaya</option>
-            <option>Subang Jaya</option>
+          <select class="cat-select" id="loc-filter" onchange="applyFilter(document.querySelector('.search-wrap input').value)">
+            <option value="">📍 All Locations</option>
+            <option>Kuala Lumpur</option><option>Petaling Jaya</option>
+            <option>Subang Jaya</option><option>Cheras</option><option>Kepong</option><option>Ampang</option>
+          </select>
+          <select class="cat-select" id="avail-filter" onchange="applyFilter(document.querySelector('.search-wrap input').value)">
+            <option value="">All Listings</option>
+            <option value="available">Available Only</option>
+            <option value="claimed">Claimed</option>
           </select>
         </div>
+
         <div class="donate-grid" id="grid"></div>
+      </div>
+    </div>
+
+    <!-- POST DONATION MODAL -->
+    <div class="modal-overlay" id="post-modal">
+      <div class="modal-box">
+        <div class="modal-title">Post a Donation</div>
+        <div class="form-row">
+          <div class="form-group"><label>Item Name *</label><input type="text" id="pd-name" placeholder="e.g. Basmati Rice"/></div>
+          <div class="form-group"><label>Quantity *</label><input type="text" id="pd-qty" placeholder="e.g. 1kg"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Category</label>
+            <select id="pd-cat">
+              <option>Grains</option><option>Vegetables</option><option>Fruits</option>
+              <option>Dairy</option><option>Meat</option><option>Canned</option><option>Bakery</option><option>Other</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Location *</label><input type="text" id="pd-loc" placeholder="e.g. Petaling Jaya"/></div>
+        </div>
+        <div class="form-group"><label>Expiry Date *</label><input type="date" id="pd-exp"/></div>
+        <div class="modal-actions">
+          <button class="btn-cancel" onclick="closePostModal()">Cancel</button>
+          <button class="btn-navy" style="width:auto;padding:10px 22px" onclick="postDonation()">Post Donation</button>
+        </div>
       </div>
     </div>
 
     <script src="js/data.js"></script>
     <script>
       SavePlate.guardAuth();
-      document.getElementById("sidebar-root").innerHTML =
-        SavePlate.renderSidebar("");
-      document.getElementById("topbar-root").innerHTML =
-        SavePlate.renderTopbar("Browse Donations");
+      document.getElementById('sidebar-root').innerHTML = SavePlate.renderSidebar('');
+      document.getElementById('topbar-root').innerHTML  = SavePlate.renderTopbar('Browse Donations');
+
+      function applyFilter(q) {
+        q = (q||'').toLowerCase();
+        const loc   = document.getElementById('loc-filter').value;
+        const avail = document.getElementById('avail-filter').value;
+        const data  = SavePlate.donations.filter(d =>
+          (!q     || d.name.toLowerCase().includes(q)) &&
+          (!loc   || d.loc === loc) &&
+          (!avail || (avail==='available' ? !d.claimed : d.claimed))
+        );
+        render(data);
+      }
 
       function render(data) {
-        document.getElementById("grid").innerHTML = data
-          .map(
-            (d) => `
-        <div class="donate-card">
-          <span class="dc-emoji">${d.emoji}</span>
-          <div class="dc-name">${d.name}</div>
-          <div class="dc-row">📦 ${d.qty}</div>
-          <div class="dc-row">📍 ${d.loc}</div>
-          <div class="dc-row">⏰ Expires: ${d.exp}</div>
-          <div class="dc-row">👤 From: ${d.donor}</div>
-          <button class="dc-btn" onclick="alert('Donation request sent for &quot;${d.name}&quot;!')">Request / Claim</button>
-        </div>`,
-          )
-          .join("");
+        if (!data.length) {
+          document.getElementById('grid').innerHTML = `<div class="empty-state"><div class="ei">🔍</div><div style="font-size:15px;font-weight:600">No listings found</div></div>`;
+          return;
+        }
+        document.getElementById('grid').innerHTML = data.map(d => `
+          <div class="donate-card ${d.claimed?'claimed':''}">
+            ${d.claimed?'<span class="claimed-badge">✓ Claimed</span>':''}
+            <span class="dc-emoji">${d.emoji||SavePlate.catEmoji[d.cat]||'🍽️'}</span>
+            <div class="dc-name">${d.name}</div>
+            <div class="dc-row">📦 ${d.qty}</div>
+            <div class="dc-row">📍 ${d.loc}</div>
+            <div class="dc-row">⏰ Expires: ${SavePlate.formatDate(d.exp)||d.exp}</div>
+            <div class="dc-row">👤 From: ${d.donor||'Community'}</div>
+            <button class="dc-btn" ${d.claimed?'disabled':''} onclick="claim('${d.id}')">
+              ${d.claimed?'✓ Claimed':'Request / Claim'}
+            </button>
+          </div>`).join('');
       }
-      function filter(q) {
-        render(
-          SavePlate.donations.filter((d) =>
-            d.name.toLowerCase().includes(q.toLowerCase()),
-          ),
-        );
+
+      function claim(id) {
+        SavePlate.claimDonation(id);
+        SavePlate.toast('Donation claimed! Contact the donor to arrange pickup.','success');
+        applyFilter(document.querySelector('.search-wrap input').value);
+        document.getElementById('topbar-root').innerHTML = SavePlate.renderTopbar('Browse Donations');
       }
-      render(SavePlate.donations);
+
+      function openPostModal()  { document.getElementById('post-modal').classList.add('open'); }
+      function closePostModal() { document.getElementById('post-modal').classList.remove('open'); }
+
+      function postDonation() {
+        const name = document.getElementById('pd-name').value.trim();
+        const qty  = document.getElementById('pd-qty').value.trim();
+        const cat  = document.getElementById('pd-cat').value;
+        const loc  = document.getElementById('pd-loc').value.trim();
+        const exp  = document.getElementById('pd-exp').value;
+        if (!name||!qty||!loc||!exp) { SavePlate.toast('Please fill all required fields.','error'); return; }
+        SavePlate.addDonation({ name, qty, cat, loc, exp, emoji: SavePlate.catEmoji[cat]||'🍽️', donor: SavePlate.user.name });
+        SavePlate.toast(`"${name}" posted as a donation!`,'success');
+        closePostModal();
+        ['pd-name','pd-qty','pd-loc','pd-exp'].forEach(id => document.getElementById(id).value='');
+        applyFilter('');
+        document.getElementById('topbar-root').innerHTML = SavePlate.renderTopbar('Browse Donations');
+      }
+
+      document.getElementById('post-modal').addEventListener('click', e => { if(e.target===document.getElementById('post-modal')) closePostModal(); });
+
+      applyFilter('');
     </script>
   </body>
 </html>

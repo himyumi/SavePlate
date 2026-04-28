@@ -5,42 +5,47 @@
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
     <title>SavePlate – Inventory</title>
     <link rel="stylesheet" href="css/style.css" />
+    <style>
+      .inv-card-actions { display:flex; gap:6px; margin-top:12px; }
+      .btn-edit-sm { flex:1; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.2); color:#fff; border-radius:7px; padding:6px; font-family:'DM Sans',sans-serif; font-size:11px; font-weight:600; cursor:pointer; transition:.2s; }
+      .btn-edit-sm:hover { background:rgba(255,255,255,.2); }
+      .btn-del-sm  { flex:1; background:rgba(229,57,53,.2); border:1px solid rgba(229,57,53,.3); color:#ff8a80; border-radius:7px; padding:6px; font-family:'DM Sans',sans-serif; font-size:11px; font-weight:600; cursor:pointer; transition:.2s; }
+      .btn-del-sm:hover { background:rgba(229,57,53,.35); }
+      .del-confirm-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:300; align-items:center; justify-content:center; }
+      .del-confirm-overlay.open { display:flex; }
+      .del-confirm-box { background:#fff; border-radius:16px; padding:30px 28px; width:340px; max-width:95vw; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,.2); }
+    </style>
   </head>
   <body>
     <div id="sidebar-root"></div>
     <div class="main-wrap">
       <div id="topbar-root"></div>
       <div class="page-content">
+
         <div class="page-header">
           <div>
             <div class="page-title">Food Inventory</div>
-            <div class="page-sub">
-              Manage your food items and track expiry dates
-            </div>
+            <div class="page-sub">Manage your food items and track expiry dates &nbsp;<span id="item-count" style="color:var(--text-muted);font-size:13px"></span></div>
           </div>
-          <button class="btn-green" onclick="openModal()">＋ add item</button>
+          <button class="btn-green" onclick="openAddModal()">＋ add item</button>
         </div>
 
         <div class="search-row">
           <div class="search-wrap">
             <span class="search-icon">🔍</span>
-            <input
-              type="text"
-              placeholder="Search...."
-              oninput="filterInv(this.value)"
-              id="search-input"
-            />
+            <input type="text" id="search-input" placeholder="Search...." oninput="applyFilters()"/>
           </div>
-          <select class="cat-select" onchange="filterCat(this.value)">
+          <select class="cat-select" id="cat-filter" onchange="applyFilters()">
             <option value="">All Categories</option>
-            <option>Dairy</option>
-            <option>Fruits</option>
-            <option>Meat</option>
-            <option>Vegetables</option>
-            <option>Grains</option>
-            <option>Canned</option>
-            <option>Frozen</option>
-            <option>Bakery</option>
+            <option>Dairy</option><option>Fruits</option><option>Meat</option>
+            <option>Vegetables</option><option>Grains</option><option>Canned</option>
+            <option>Frozen</option><option>Bakery</option><option>Other</option>
+          </select>
+          <select class="cat-select" id="status-filter" onchange="applyFilters()">
+            <option value="">All Status</option>
+            <option value="danger">Expiring Soon</option>
+            <option value="warn">Watch</option>
+            <option value="ok">Fresh</option>
           </select>
         </div>
 
@@ -48,58 +53,45 @@
       </div>
     </div>
 
+    <!-- ADD / EDIT MODAL -->
     <div class="modal-overlay" id="modal">
       <div class="modal-box">
-        <div class="modal-title">Add Food Item</div>
-        <div class="form-group">
-          <label>Item Name *</label
-          ><input type="text" id="f-name" placeholder="e.g. Fresh Milk" />
-        </div>
+        <div class="modal-title" id="modal-title">Add Food Item</div>
+        <input type="hidden" id="edit-id"/>
+        <div class="form-group"><label>Item Name *</label><input type="text" id="f-name" placeholder="e.g. Fresh Milk"/></div>
         <div class="form-row">
-          <div class="form-group">
-            <label>Quantity *</label
-            ><input type="text" id="f-qty" placeholder="e.g. 1 Liter" />
-          </div>
-          <div class="form-group">
-            <label>Category *</label>
+          <div class="form-group"><label>Quantity *</label><input type="text" id="f-qty" placeholder="e.g. 1 Liter"/></div>
+          <div class="form-group"><label>Category *</label>
             <select id="f-cat">
-              <option>Dairy</option>
-              <option>Fruits</option>
-              <option>Meat</option>
-              <option>Vegetables</option>
-              <option>Grains</option>
-              <option>Canned</option>
-              <option>Frozen</option>
-              <option>Bakery</option>
+              <option>Dairy</option><option>Fruits</option><option>Meat</option>
+              <option>Vegetables</option><option>Grains</option><option>Canned</option>
+              <option>Frozen</option><option>Bakery</option><option>Other</option>
             </select>
           </div>
         </div>
         <div class="form-row">
-          <div class="form-group">
-            <label>Expiry Date *</label><input type="date" id="f-exp" />
-          </div>
-          <div class="form-group">
-            <label>Storage Location</label>
-            <select id="f-loc">
-              <option>Fridge</option>
-              <option>Pantry</option>
-              <option>Freezer</option>
-            </select>
+          <div class="form-group"><label>Expiry Date *</label><input type="date" id="f-exp"/></div>
+          <div class="form-group"><label>Storage Location</label>
+            <select id="f-loc"><option>Fridge</option><option>Pantry</option><option>Freezer</option></select>
           </div>
         </div>
-        <div class="form-group">
-          <label>Notes (optional)</label
-          ><input type="text" id="f-notes" placeholder="Any remarks..." />
-        </div>
+        <div class="form-group"><label>Notes (optional)</label><input type="text" id="f-notes" placeholder="Any remarks..."/></div>
         <div class="modal-actions">
           <button class="btn-cancel" onclick="closeModal()">Cancel</button>
-          <button
-            class="btn-navy"
-            style="width: auto; padding: 10px 22px"
-            onclick="addItem()"
-          >
-            Add Item
-          </button>
+          <button class="btn-navy" style="width:auto;padding:10px 22px" id="save-btn" onclick="saveItem()">Add Item</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DELETE CONFIRM -->
+    <div class="del-confirm-overlay" id="del-overlay">
+      <div class="del-confirm-box">
+        <div style="font-size:38px;margin-bottom:10px">🗑️</div>
+        <div style="font-size:17px;font-weight:700;margin-bottom:8px">Remove Item?</div>
+        <div style="font-size:13px;color:var(--text-muted);margin-bottom:22px">Permanently remove <strong id="del-item-name"></strong> from your inventory?</div>
+        <div style="display:flex;gap:10px;justify-content:center">
+          <button class="btn-cancel" onclick="closeDelOverlay()">Cancel</button>
+          <button style="background:var(--red);color:#fff;border:none;border-radius:8px;padding:10px 22px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer" onclick="confirmDelete()">Remove</button>
         </div>
       </div>
     </div>
@@ -107,103 +99,125 @@
     <script src="js/data.js"></script>
     <script>
       SavePlate.guardAuth();
-      document.getElementById("sidebar-root").innerHTML =
-        SavePlate.renderSidebar("inventory");
-      document.getElementById("topbar-root").innerHTML =
-        SavePlate.renderTopbar("Inventory");
+      document.getElementById('sidebar-root').innerHTML = SavePlate.renderSidebar('inventory');
+      document.getElementById('topbar-root').innerHTML  = SavePlate.renderTopbar('Inventory');
 
-      const catEmoji = {
-        Dairy: "🥛",
-        Fruits: "🍎",
-        Meat: "🍗",
-        Vegetables: "🥦",
-        Grains: "🌾",
-        Canned: "🥫",
-        Frozen: "❄️",
-        Bakery: "🍞",
-        Other: "🍽",
-      };
+      let pendingDelId = null;
+
+      function applyFilters() {
+        const q  = document.getElementById('search-input').value.toLowerCase();
+        const c  = document.getElementById('cat-filter').value;
+        const st = document.getElementById('status-filter').value;
+        const data = SavePlate.inventory.filter(i =>
+          (!q  || i.name.toLowerCase().includes(q)) &&
+          (!c  || i.cat === c) &&
+          (!st || i.status === st)
+        );
+        renderGrid(data);
+      }
 
       function renderGrid(data) {
-        document.getElementById("inv-grid").innerHTML = data
-          .map(
-            (item, i) => `
-        <div class="inv-card">
-          <div class="inv-card-header">
-            <div class="inv-icon">${catEmoji[item.cat] || "🍽"}</div>
-            <div>
-              <div class="inv-name">${item.name}</div>
-              <div class="inv-cat">${item.cat}</div>
-            </div>
-          </div>
-          <button class="inv-close" onclick="removeItem(${i})">✕</button>
-          <div class="inv-row"><span class="inv-row-label">Quantity:</span><span>${item.qty}</span></div>
-          <div class="inv-row"><span class="inv-row-label">Location:</span><span>${item.loc}</span></div>
-          <div class="inv-row">
-            <span class="inv-row-label">Expires:</span>
-            <span class="exp-badge ${item.status}">⏰ ${SavePlate.daysLeft(item.exp)}</span>
-          </div>
-          <div class="inv-date">${new Date(item.exp).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</div>
-        </div>`,
-          )
-          .join("");
-      }
-
-      let view = [...SavePlate.inventory];
-      function filterInv(q) {
-        view = SavePlate.inventory.filter((i) =>
-          i.name.toLowerCase().includes(q.toLowerCase()),
-        );
-        renderGrid(view);
-      }
-      function filterCat(c) {
-        view = c
-          ? SavePlate.inventory.filter((i) => i.cat === c)
-          : [...SavePlate.inventory];
-        renderGrid(view);
-      }
-      function removeItem(idx) {
-        SavePlate.inventory.splice(idx, 1);
-        view = [...SavePlate.inventory];
-        renderGrid(view);
-      }
-
-      function openModal() {
-        document.getElementById("modal").classList.add("open");
-      }
-      function closeModal() {
-        document.getElementById("modal").classList.remove("open");
-      }
-      function addItem() {
-        const name = document.getElementById("f-name").value.trim();
-        const qty = document.getElementById("f-qty").value.trim();
-        const cat = document.getElementById("f-cat").value;
-        const exp = document.getElementById("f-exp").value;
-        const loc = document.getElementById("f-loc").value;
-        if (!name || !qty || !exp) {
-          alert("Please fill required fields.");
+        document.getElementById('item-count').textContent = `(${data.length} item${data.length!==1?'s':''})`;
+        if (!data.length) {
+          document.getElementById('inv-grid').innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:48px;color:var(--text-muted)"><div style="font-size:48px;margin-bottom:12px">📦</div><div style="font-size:15px;font-weight:600">No items found</div></div>`;
           return;
         }
-        const diff = (new Date(exp) - new Date()) / (1000 * 60 * 60 * 24);
-        const status = diff <= 2 ? "danger" : diff <= 5 ? "warn" : "ok";
-        SavePlate.inventory.unshift({
-          name,
-          emoji: catEmoji[cat] || "🍽",
-          cat,
-          qty,
-          loc,
-          exp,
-          status,
-        });
-        view = [...SavePlate.inventory];
-        renderGrid(view);
-        closeModal();
-        ["f-name", "f-qty", "f-exp", "f-notes"].forEach(
-          (id) => (document.getElementById(id).value = ""),
-        );
+        document.getElementById('inv-grid').innerHTML = data.map(item => `
+          <div class="inv-card">
+            <div class="inv-card-header">
+              <div class="inv-icon">${SavePlate.catEmoji[item.cat]||'🍽️'}</div>
+              <div><div class="inv-name">${item.name}</div><div class="inv-cat">${item.cat}</div></div>
+            </div>
+            <button class="inv-close" onclick="openDelOverlay('${item.id}')">✕</button>
+            <div class="inv-row"><span class="inv-row-label">Quantity:</span><span>${item.qty}</span></div>
+            <div class="inv-row"><span class="inv-row-label">Location:</span><span>${item.loc}</span></div>
+            <div class="inv-row">
+              <span class="inv-row-label">Expires:</span>
+              <span class="exp-badge ${item.status}">⏰ ${SavePlate.daysLeft(item.exp)}</span>
+            </div>
+            ${item.notes?`<div class="inv-date" style="color:#9ab5cc;margin-top:6px">📝 ${item.notes}</div>`:''}
+            <div class="inv-date">${SavePlate.formatDate(item.exp)}</div>
+            <div class="inv-card-actions">
+              <button class="btn-edit-sm" onclick="openEditModal('${item.id}')">✏️ Edit</button>
+              <button class="btn-del-sm"  onclick="openDelOverlay('${item.id}')">🗑️ Remove</button>
+            </div>
+          </div>`).join('');
       }
 
-      renderGrid(view);
+      // ── ADD ──
+      function openAddModal() {
+        document.getElementById('modal-title').textContent = 'Add Food Item';
+        document.getElementById('save-btn').textContent    = 'Add Item';
+        document.getElementById('edit-id').value = '';
+        ['f-name','f-qty','f-notes'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('f-exp').value = '';
+        document.getElementById('modal').classList.add('open');
+      }
+
+      // ── EDIT ──
+      function openEditModal(id) {
+        const item = SavePlate.inventory.find(i => i.id===id);
+        if (!item) return;
+        document.getElementById('modal-title').textContent = 'Edit Food Item';
+        document.getElementById('save-btn').textContent    = 'Save Changes';
+        document.getElementById('edit-id').value  = id;
+        document.getElementById('f-name').value   = item.name;
+        document.getElementById('f-qty').value    = item.qty;
+        document.getElementById('f-cat').value    = item.cat;
+        document.getElementById('f-exp').value    = item.exp;
+        document.getElementById('f-loc').value    = item.loc;
+        document.getElementById('f-notes').value  = item.notes||'';
+        document.getElementById('modal').classList.add('open');
+      }
+
+      function closeModal() { document.getElementById('modal').classList.remove('open'); }
+
+      function saveItem() {
+        const name  = document.getElementById('f-name').value.trim();
+        const qty   = document.getElementById('f-qty').value.trim();
+        const cat   = document.getElementById('f-cat').value;
+        const exp   = document.getElementById('f-exp').value;
+        const loc   = document.getElementById('f-loc').value;
+        const notes = document.getElementById('f-notes').value.trim();
+        const editId = document.getElementById('edit-id').value;
+
+        if (!name||!qty||!exp) { SavePlate.toast('Please fill in Name, Quantity and Expiry Date.','error'); return; }
+
+        if (editId) {
+          SavePlate.updateInventoryItem(editId, { name, qty, cat, exp, loc, notes, emoji: SavePlate.catEmoji[cat]||'🍽️' });
+          SavePlate.toast(`"${name}" updated!`);
+        } else {
+          SavePlate.addInventoryItem({ name, qty, cat, exp, loc, notes, emoji: SavePlate.catEmoji[cat]||'🍽️' });
+          SavePlate.toast(`"${name}" added to inventory!`);
+        }
+        closeModal();
+        applyFilters();
+        document.getElementById('topbar-root').innerHTML = SavePlate.renderTopbar('Inventory');
+      }
+
+      // ── DELETE ──
+      function openDelOverlay(id) {
+        const item = SavePlate.inventory.find(i => i.id===id);
+        if (!item) return;
+        pendingDelId = id;
+        document.getElementById('del-item-name').textContent = item.name;
+        document.getElementById('del-overlay').classList.add('open');
+      }
+      function closeDelOverlay() { document.getElementById('del-overlay').classList.remove('open'); pendingDelId=null; }
+      function confirmDelete() {
+        if (!pendingDelId) return;
+        SavePlate.deleteInventoryItem(pendingDelId);
+        SavePlate.toast('Item removed.','info');
+        closeDelOverlay();
+        applyFilters();
+        document.getElementById('topbar-root').innerHTML = SavePlate.renderTopbar('Inventory');
+      }
+
+      // Close on backdrop
+      document.getElementById('modal').addEventListener('click', e => { if(e.target===document.getElementById('modal')) closeModal(); });
+      document.getElementById('del-overlay').addEventListener('click', e => { if(e.target===document.getElementById('del-overlay')) closeDelOverlay(); });
+
+      applyFilters();
     </script>
   </body>
 </html>

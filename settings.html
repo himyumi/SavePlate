@@ -5,6 +5,95 @@
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
     <title>SavePlate – Settings</title>
     <link rel="stylesheet" href="css/style.css" />
+    <style>
+      /* ── PROFILE EDITOR CARD (Figma style) ── */
+      .profile-edit-card {
+        background: var(--navy-card);
+        border-radius: 16px;
+        padding: 28px 28px 32px;
+        margin-bottom: 28px;
+        position: relative;
+      }
+      .pec-body {
+        display: flex;
+        align-items: flex-start;
+        gap: 24px;
+      }
+
+      /* Photo box */
+      .pec-photo-box {
+        width: 110px; height: 130px; flex-shrink: 0;
+        background: rgba(255,255,255,.08);
+        border: 2px dashed rgba(255,255,255,.3);
+        border-radius: 12px;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        cursor: pointer; transition: .2s; overflow: hidden; position: relative;
+      }
+      .pec-photo-box:hover { border-color: rgba(255,255,255,.6); background: rgba(255,255,255,.13); }
+      .pec-photo-box img   { width:100%; height:100%; object-fit:cover; border-radius:10px; position:absolute; inset:0; }
+      .pec-photo-label     { text-align:center; color:rgba(255,255,255,.5); font-size:12px; line-height:1.4; pointer-events:none; z-index:1; }
+      .pec-photo-label .plus { font-size:24px; display:block; margin-bottom:4px; }
+      #photo-input { display:none; }
+
+      /* Fields */
+      .pec-fields { flex:1; display:flex; flex-direction:column; }
+      .pec-field-label { font-size:13px; font-weight:600; color:rgba(255,255,255,.7); margin-bottom:5px; margin-top:14px; }
+      .pec-field-label:first-child { margin-top:0; }
+      .pec-input {
+        width:100%; background:rgba(255,255,255,.08);
+        border:1.5px solid rgba(255,255,255,.15); border-radius:8px;
+        padding:10px 14px; font-size:14px; font-family:'DM Sans',sans-serif;
+        color:#fff; outline:none; transition:.2s;
+      }
+      .pec-input::placeholder { color:rgba(255,255,255,.3); }
+      .pec-input:focus { border-color:var(--green-btn); }
+      .pec-input.invalid { border-color:var(--red); }
+      .pec-field-err { font-size:11px; color:#ff8a80; margin-top:3px; display:none; }
+
+      .pec-save-btn {
+        margin-top:20px; background:var(--green-btn); color:#fff; border:none;
+        border-radius:8px; padding:11px 28px; font-family:'DM Sans',sans-serif;
+        font-size:14px; font-weight:700; cursor:pointer; transition:.2s; align-self:flex-start;
+      }
+      .pec-save-btn:hover { background:#43a047; }
+
+      /* ── CHANGE PASSWORD ── */
+      .pwd-card {
+        background:#f9f9f9; border:1px solid var(--border);
+        border-radius:14px; padding:22px 22px 18px;
+      }
+      .pwd-card h3 { font-size:15px; font-weight:700; margin-bottom:16px; color:var(--navy); }
+      .pwd-group { margin-bottom:12px; }
+      .pwd-group label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--text-muted); display:block; margin-bottom:4px; }
+      .pwd-group input {
+        width:100%; border:1.5px solid var(--border); border-radius:8px;
+        padding:10px 12px; font-size:14px; font-family:'DM Sans',sans-serif;
+        outline:none; color:var(--text);
+      }
+      .pwd-group input:focus { border-color:var(--navy); }
+      .pwd-group input.invalid { border-color:var(--red); }
+      .pwd-err { font-size:11px; color:var(--red); margin-top:3px; display:none; }
+      .pwd-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+      /* ── TOGGLES ── */
+      .settings-section       { margin-bottom:24px; }
+      .settings-section-label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.6px; color:var(--text-muted); margin-bottom:10px; }
+      .settings-card          { background:#f9f9f9; border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+      .settings-row           { display:flex; align-items:center; justify-content:space-between; padding:14px 18px; border-bottom:1px solid var(--border); font-size:14px; }
+      .settings-row:last-child { border-bottom:none; }
+      .settings-row-lbl       { display:flex; align-items:center; gap:9px; font-weight:500; }
+      .toggle { width:40px; height:23px; background:#ccc; border-radius:12px; position:relative; cursor:pointer; transition:.2s; flex-shrink:0; }
+      .toggle.on { background:var(--green); }
+      .toggle::after { content:''; position:absolute; top:2.5px; left:2.5px; width:18px; height:18px; background:#fff; border-radius:50%; transition:transform .2s; }
+      .toggle.on::after { transform:translateX(17px); }
+
+      /* ── LOG OUT ── */
+      .logout-card { background:#fff5f5; border:1px solid #fca5a5; border-radius:12px; overflow:hidden; }
+      .logout-row  { display:flex; align-items:center; justify-content:space-between; padding:14px 18px; font-size:14px; }
+      .btn-logout  { background:var(--red); color:#fff; border:none; border-radius:8px; padding:8px 18px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600; cursor:pointer; }
+      .btn-logout:hover { background:#c62828; }
+    </style>
   </head>
   <body>
     <div id="sidebar-root"></div>
@@ -12,76 +101,231 @@
       <div id="topbar-root"></div>
       <div class="page-content">
         <div class="page-title">Settings</div>
-        <div class="page-sub">Manage your account and preferences</div>
+        <div class="page-sub">Manage your personal identity, email and password</div>
 
-        <div class="profile-banner">
-          <div class="profile-big-av">👤</div>
-          <div>
-            <div class="profile-bn" id="pname">User</div>
-            <div class="profile-be" id="pemail">user@email.com</div>
+        <!-- ── PROFILE EDITOR ── -->
+        <div class="profile-edit-card">
+          <div class="pec-body">
+
+            <!-- Photo upload -->
+            <div class="pec-photo-box" onclick="document.getElementById('photo-input').click()" title="Click to upload profile photo">
+              <div class="pec-photo-label" id="photo-label">
+                <span class="plus">＋</span>
+                Add Photo<br>Profile
+              </div>
+              <img id="photo-preview" src="" style="display:none"/>
+            </div>
+            <input type="file" id="photo-input" accept="image/*" onchange="handlePhoto(this)"/>
+
+            <!-- Fields -->
+            <div class="pec-fields">
+              <div class="pec-field-label">Name</div>
+              <input class="pec-input" type="text" id="pec-name" placeholder="Your full name"/>
+              <div class="pec-field-err" id="pec-name-err">Name is required.</div>
+
+              <div class="pec-field-label">Email</div>
+              <input class="pec-input" type="email" id="pec-email" placeholder="you@email.com"/>
+              <div class="pec-field-err" id="pec-email-err">Please enter a valid email address.</div>
+
+              <button class="pec-save-btn" onclick="saveProfile()">Save Profile</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── CHANGE PASSWORD ── -->
+        <div class="settings-section">
+          <div class="settings-section-label">Change Password</div>
+          <div class="pwd-card">
+            <div class="pwd-group">
+              <label>Current Password</label>
+              <input type="password" id="pwd-current" placeholder="Enter current password" oninput="clearPwdErr('current')"/>
+              <div class="pwd-err" id="pwd-current-err">Current password is required.</div>
+            </div>
+            <div class="pwd-row">
+              <div class="pwd-group">
+                <label>New Password</label>
+                <input type="password" id="pwd-new" placeholder="Min. 6 characters" oninput="clearPwdErr('new')"/>
+                <div class="pwd-err" id="pwd-new-err">Password must be at least 6 characters.</div>
+              </div>
+              <div class="pwd-group">
+                <label>Confirm New Password</label>
+                <input type="password" id="pwd-confirm" placeholder="Re-enter new password" oninput="clearPwdErr('confirm')"/>
+                <div class="pwd-err" id="pwd-confirm-err">Passwords do not match.</div>
+              </div>
+            </div>
+            <button class="btn-navy" style="width:auto;padding:10px 22px;margin-top:4px" onclick="changePassword()">Update Password</button>
+          </div>
+        </div>
+
+        <!-- ── PREFERENCES ── -->
+        <div class="settings-section">
+          <div class="settings-section-label">Notifications & Privacy</div>
+          <div class="settings-card">
+            <div class="settings-row">
+              <span class="settings-row-lbl">🔔 Push Notifications</span>
+              <div class="toggle on" id="tog-push" onclick="togglePref(this,'push')"></div>
+            </div>
+            <div class="settings-row">
+              <span class="settings-row-lbl">📧 Email Alerts for Expiry</span>
+              <div class="toggle on" id="tog-email" onclick="togglePref(this,'email')"></div>
+            </div>
+            <div class="settings-row">
+              <span class="settings-row-lbl">🤝 Donation Alerts</span>
+              <div class="toggle" id="tog-don" onclick="togglePref(this,'don')"></div>
+            </div>
+            <div class="settings-row">
+              <span class="settings-row-lbl">👁 Food Listing Visibility</span>
+              <div class="toggle" id="tog-vis" onclick="togglePref(this,'vis')"></div>
+            </div>
           </div>
         </div>
 
         <div class="settings-section">
-          <div class="settings-section-label">Account</div>
+          <div class="settings-section-label">Security</div>
           <div class="settings-card">
             <div class="settings-row">
               <span class="settings-row-lbl">🔐 Two-Factor Authentication</span>
-              <div
-                class="toggle on"
-                onclick="this.classList.toggle('on')"
-              ></div>
-            </div>
-            <div class="settings-row">
-              <span class="settings-row-lbl">Email Alerts</span>
-              <div
-                class="toggle on"
-                onclick="this.classList.toggle('on')"
-              ></div>
-            </div>
-            <div class="settings-row">
-              <span class="settings-row-lbl">🔔 Notifications</span>
-              <div
-                class="toggle on"
-                onclick="this.classList.toggle('on')"
-              ></div>
+              <div class="toggle on" id="tog-2fa" onclick="togglePref(this,'2fa')"></div>
             </div>
             <div class="settings-row">
               <span class="settings-row-lbl">🌙 Dark Mode</span>
-              <div class="toggle" onclick="this.classList.toggle('on')"></div>
+              <div class="toggle" id="tog-dark" onclick="togglePref(this,'dark')"></div>
             </div>
           </div>
         </div>
 
+        <!-- ── LOG OUT ── -->
         <div class="settings-section">
-          <div class="settings-card">
-            <div
-              class="settings-row"
-              style="cursor: pointer"
-              onclick="logout()"
-            >
-              <span class="settings-row-lbl" style="color: var(--red)"
-                >Log Out</span
-              >
-              <span style="color: #bbb; font-size: 14px">></span>
+          <div class="logout-card">
+            <div class="logout-row">
+              <div>
+                <div style="font-weight:600;font-size:14px;color:var(--red)">Log Out</div>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:2px">Sign out of your SavePlate account</div>
+              </div>
+              <button class="btn-logout" onclick="logout()">Log Out</button>
             </div>
           </div>
         </div>
+
       </div>
     </div>
 
     <script src="js/data.js"></script>
     <script>
       SavePlate.guardAuth();
-      document.getElementById("sidebar-root").innerHTML =
-        SavePlate.renderSidebar("settings");
-      document.getElementById("topbar-root").innerHTML =
-        SavePlate.renderTopbar("Settings");
-      document.getElementById("pname").textContent = SavePlate.user.name;
-      document.getElementById("pemail").textContent = SavePlate.user.email;
+      document.getElementById('sidebar-root').innerHTML = SavePlate.renderSidebar('settings');
+      document.getElementById('topbar-root').innerHTML  = SavePlate.renderTopbar('Settings');
+
+      // ── LOAD PROFILE ──
+      function loadProfile() {
+        const u = SavePlate.user || {};
+        document.getElementById('pec-name').value  = u.name  || '';
+        document.getElementById('pec-email').value = u.email || '';
+        if (u.photo) {
+          document.getElementById('photo-preview').src          = u.photo;
+          document.getElementById('photo-preview').style.display = 'block';
+          document.getElementById('photo-label').style.display  = 'none';
+        }
+      }
+      loadProfile();
+
+      // ── PHOTO ──
+      function handlePhoto(input) {
+        const file = input.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = e => {
+          document.getElementById('photo-preview').src          = e.target.result;
+          document.getElementById('photo-preview').style.display = 'block';
+          document.getElementById('photo-label').style.display  = 'none';
+        };
+        reader.readAsDataURL(file);
+      }
+
+      // ── SAVE PROFILE ──
+      function saveProfile() {
+        const name  = document.getElementById('pec-name').value.trim();
+        const email = document.getElementById('pec-email').value.trim();
+        let ok = true;
+
+        // Reset errors
+        ['name','email'].forEach(f => {
+          document.getElementById(`pec-${f}-err`).style.display = 'none';
+          document.getElementById(`pec-${f}`).classList.remove('invalid');
+        });
+
+        if (!name) {
+          document.getElementById('pec-name-err').style.display = 'block';
+          document.getElementById('pec-name').classList.add('invalid');
+          ok = false;
+        }
+        if (!email || !SavePlate.validEmail(email)) {
+          document.getElementById('pec-email-err').style.display = 'block';
+          document.getElementById('pec-email').classList.add('invalid');
+          ok = false;
+        }
+        if (!ok) return;
+
+        const previewSrc = document.getElementById('photo-preview').src;
+        const photo = (previewSrc && previewSrc.startsWith('data:')) ? previewSrc : (SavePlate.user?.photo || null);
+        SavePlate.setUser({ ...SavePlate.user, name, email, photo });
+
+        document.getElementById('sidebar-root').innerHTML = SavePlate.renderSidebar('settings');
+        document.getElementById('topbar-root').innerHTML  = SavePlate.renderTopbar('Settings');
+        SavePlate.toast('Profile saved!', 'success');
+      }
+
+      // ── CHANGE PASSWORD ──
+      function clearPwdErr(field) {
+        document.getElementById(`pwd-${field}-err`).style.display = 'none';
+        document.getElementById(`pwd-${field}`).classList.remove('invalid');
+      }
+      function changePassword() {
+        const curr    = document.getElementById('pwd-current').value;
+        const newPwd  = document.getElementById('pwd-new').value;
+        const confirm = document.getElementById('pwd-confirm').value;
+        let ok = true;
+
+        if (!curr) {
+          document.getElementById('pwd-current-err').style.display = 'block';
+          document.getElementById('pwd-current').classList.add('invalid');
+          ok = false;
+        }
+        if (newPwd.length < 6) {
+          document.getElementById('pwd-new-err').style.display = 'block';
+          document.getElementById('pwd-new').classList.add('invalid');
+          ok = false;
+        }
+        if (newPwd !== confirm) {
+          document.getElementById('pwd-confirm-err').style.display = 'block';
+          document.getElementById('pwd-confirm').classList.add('invalid');
+          ok = false;
+        }
+        if (!ok) return;
+
+        ['pwd-current','pwd-new','pwd-confirm'].forEach(id => document.getElementById(id).value = '');
+        SavePlate.toast('Password updated successfully!', 'success');
+      }
+
+      // ── TOGGLE PREFS ──
+      const prefDefaults = { push:true, email:true, don:false, vis:false, '2fa':true, dark:false };
+      const prefs = JSON.parse(localStorage.getItem('sp_prefs') || '{}');
+      Object.entries(prefDefaults).forEach(([k, def]) => {
+        const state = prefs[k] !== undefined ? prefs[k] : def;
+        const el    = document.getElementById(`tog-${k}`);
+        if (el) { if (state) el.classList.add('on'); else el.classList.remove('on'); }
+      });
+      function togglePref(el, key) {
+        el.classList.toggle('on');
+        const p = JSON.parse(localStorage.getItem('sp_prefs') || '{}');
+        p[key] = el.classList.contains('on');
+        localStorage.setItem('sp_prefs', JSON.stringify(p));
+        SavePlate.toast(`Setting updated.`, 'info');
+      }
+
       function logout() {
         SavePlate.clearUser();
-        location.href = "index.html";
+        location.href = 'index.html';
       }
     </script>
   </body>
