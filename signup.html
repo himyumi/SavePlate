@@ -47,7 +47,7 @@
     </div>
     <script src="js/data.js"></script>
     <script>
-      function doSignup() {
+      async function doSignup() {
         const n = document.getElementById("name").value.trim();
         const e = document.getElementById("email").value.trim();
         const p = document.getElementById("pass").value.trim();
@@ -55,8 +55,25 @@
           document.getElementById("err").style.display = "block";
           return;
         }
-        SavePlate.setUser({ name: n, email: e });
-        location.href = "dashboard.html";
+        try {
+          const res = await fetch(`${API_BASE}/auth/signup`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: n, email: e, password: p })
+          });
+          const data = await res.json();
+          if (data.success) {
+            SavePlate.setUser(data.user);
+            location.href = "dashboard.html";
+          } else {
+            document.getElementById("err").textContent = data.message || "Signup failed";
+            document.getElementById("err").style.display = "block";
+          }
+        } catch (err) {
+          console.error("Signup error:", err);
+          document.getElementById("err").textContent = "Network error";
+          document.getElementById("err").style.display = "block";
+        }
       }
       document.addEventListener("keydown", (ev) => {
         if (ev.key === "Enter") doSignup();

@@ -124,6 +124,14 @@
         Other: "🍽",
       };
 
+      let view = [];
+
+      async function loadInventory() {
+        await SavePlate.loadData();
+        view = [...SavePlate.inventory];
+        renderGrid(view);
+      }
+
       function renderGrid(data) {
         document.getElementById("inv-grid").innerHTML = data
           .map(
@@ -136,7 +144,7 @@
               <div class="inv-cat">${item.cat}</div>
             </div>
           </div>
-          <button class="inv-close" onclick="removeItem(${i})">✕</button>
+          <button class="inv-close" onclick="removeItem('${item._id}', ${i})">✕</button>
           <div class="inv-row"><span class="inv-row-label">Quantity:</span><span>${item.qty}</span></div>
           <div class="inv-row"><span class="inv-row-label">Location:</span><span>${item.loc}</span></div>
           <div class="inv-row">
@@ -149,7 +157,6 @@
           .join("");
       }
 
-      let view = [...SavePlate.inventory];
       function filterInv(q) {
         view = SavePlate.inventory.filter((i) =>
           i.name.toLowerCase().includes(q.toLowerCase()),
@@ -162,9 +169,9 @@
           : [...SavePlate.inventory];
         renderGrid(view);
       }
-      function removeItem(idx) {
-        SavePlate.inventory.splice(idx, 1);
-        view = [...SavePlate.inventory];
+      async function removeItem(id, idx) {
+        await SavePlate.removeInventoryItem(id);
+        view.splice(idx, 1);
         renderGrid(view);
       }
 
@@ -174,19 +181,20 @@
       function closeModal() {
         document.getElementById("modal").classList.remove("open");
       }
-      function addItem() {
+      async function addItem() {
         const name = document.getElementById("f-name").value.trim();
         const qty = document.getElementById("f-qty").value.trim();
         const cat = document.getElementById("f-cat").value;
         const exp = document.getElementById("f-exp").value;
         const loc = document.getElementById("f-loc").value;
+        const notes = document.getElementById("f-notes").value.trim();
         if (!name || !qty || !exp) {
           alert("Please fill required fields.");
           return;
         }
         const diff = (new Date(exp) - new Date()) / (1000 * 60 * 60 * 24);
         const status = diff <= 2 ? "danger" : diff <= 5 ? "warn" : "ok";
-        SavePlate.inventory.unshift({
+        const newItem = {
           name,
           emoji: catEmoji[cat] || "🍽",
           cat,
@@ -194,10 +202,21 @@
           loc,
           exp,
           status,
-        });
+          notes,
+        };
+        await SavePlate.addInventoryItem(newItem);
         view = [...SavePlate.inventory];
         renderGrid(view);
         closeModal();
+        // Clear form
+        document.getElementById("f-name").value = "";
+        document.getElementById("f-qty").value = "";
+        document.getElementById("f-exp").value = "";
+        document.getElementById("f-notes").value = "";
+      }
+
+      // Load data on page load
+      loadInventory();
         ["f-name", "f-qty", "f-exp", "f-notes"].forEach(
           (id) => (document.getElementById(id).value = ""),
         );

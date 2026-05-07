@@ -45,15 +45,32 @@
     </div>
     <script src="js/data.js"></script>
     <script>
-      function doLogin() {
+      async function doLogin() {
         const e = document.getElementById("email").value.trim();
         const p = document.getElementById("pass").value.trim();
         if (!e || !p) {
           document.getElementById("err").style.display = "block";
           return;
         }
-        SavePlate.setUser({ name: e.split("@")[0], email: e });
-        location.href = "dashboard.html";
+        try {
+          const res = await fetch(`${API_BASE}/auth/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: e, password: p })
+          });
+          const data = await res.json();
+          if (data.success) {
+            SavePlate.setUser(data.user);
+            location.href = "dashboard.html";
+          } else {
+            document.getElementById("err").textContent = data.message || "Login failed";
+            document.getElementById("err").style.display = "block";
+          }
+        } catch (err) {
+          console.error("Login error:", err);
+          document.getElementById("err").textContent = "Network error";
+          document.getElementById("err").style.display = "block";
+        }
       }
       document.addEventListener("keydown", (ev) => {
         if (ev.key === "Enter") doLogin();

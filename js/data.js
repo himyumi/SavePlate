@@ -1,123 +1,10 @@
+const API_BASE = "http://localhost:4000/api";
+
 const SavePlate = {
-  inventory: [
-    {
-      name: "Milk",
-      emoji: "🥛",
-      cat: "Dairy",
-      qty: "1 Liter",
-      loc: "Fridge",
-      exp: "2026-03-22",
-      status: "warn",
-    },
-    {
-      name: "Yogurt",
-      emoji: "🥛",
-      cat: "Dairy",
-      qty: "12 Pieces",
-      loc: "Fridge",
-      exp: "2026-03-21",
-      status: "danger",
-    },
-    {
-      name: "Apple",
-      emoji: "🍎",
-      cat: "Fruits",
-      qty: "500 GRAMS",
-      loc: "Fridge",
-      exp: "2026-03-28",
-      status: "ok",
-    },
-    {
-      name: "Chicken thigh",
-      emoji: "🍗",
-      cat: "Meat",
-      qty: "800 grams",
-      loc: "Freezer",
-      exp: "2026-03-25",
-      status: "warn",
-    },
-  ],
-  donations: [
-    {
-      emoji: "🌾",
-      name: "Basmati Rice",
-      qty: "1kg",
-      loc: "Petaling Jaya",
-      exp: "Jan 2027",
-      donor: "Ahmad",
-    },
-    {
-      emoji: "🥕",
-      name: "Carrots",
-      qty: "500g",
-      loc: "Kuala Lumpur",
-      exp: "Apr 17",
-      donor: "Siti",
-    },
-    {
-      emoji: "🥫",
-      name: "Sardines (canned)",
-      qty: "3 tins",
-      loc: "Subang Jaya",
-      exp: "Mar 2027",
-      donor: "Chen",
-    },
-    {
-      emoji: "🧅",
-      name: "Onions",
-      qty: "1kg",
-      loc: "Cheras",
-      exp: "Apr 20",
-      donor: "Ravi",
-    },
-    {
-      emoji: "🍚",
-      name: "White Rice",
-      qty: "3kg",
-      loc: "Kepong",
-      exp: "Dec 2026",
-      donor: "Aishah",
-    },
-    {
-      emoji: "🥜",
-      name: "Peanut Butter",
-      qty: "1 jar",
-      loc: "Ampang",
-      exp: "Sep 2026",
-      donor: "Lee",
-    },
-  ],
-  meals: {
-    Mon: [
-      { t: "Breakfast", n: "Egg Toast" },
-      { t: "Lunch", n: "Fried Rice" },
-      { t: "Dinner", n: "Chicken Stir-fry" },
-    ],
-    Tue: [
-      { t: "Breakfast", n: "Greek Yogurt Parfait" },
-      { t: "Lunch", n: "Nasi Lemak" },
-    ],
-    Wed: [
-      { t: "Lunch", n: "Pasta" },
-      { t: "Dinner", n: "Tomato Soup" },
-    ],
-    Thu: [{ t: "Breakfast", n: "Toast & Eggs" }],
-    Fri: [
-      { t: "Lunch", n: "Chicken Rice" },
-      { t: "Dinner", n: "Salad Bowl" },
-    ],
-    Sat: [
-      { t: "Breakfast", n: "Strawberry Smoothie" },
-      { t: "Dinner", n: "BBQ Night" },
-    ],
-    Sun: [{ t: "Lunch", n: "Family Nasi" }],
-  },
-  chartData: [
-    { m: "Jan", saved: 5.2, wasted: 2.1 },
-    { m: "Feb", saved: 6.8, wasted: 1.4 },
-    { m: "Mar", saved: 4.5, wasted: 3.2 },
-    { m: "Apr", saved: 7.2, wasted: 0.8 },
-  ],
+  inventory: [],
+  donations: [],
+  meals: {},
+  chartData: [],
 
   user: JSON.parse(sessionStorage.getItem("sp_user") || "null"),
   setUser(u) {
@@ -127,6 +14,52 @@ const SavePlate = {
   clearUser() {
     this.user = null;
     sessionStorage.removeItem("sp_user");
+  },
+
+  async loadData() {
+    if (!this.user) return;
+    try {
+      const [invRes, donRes, mealRes, chartRes] = await Promise.all([
+        fetch(`${API_BASE}/inventory`, {
+          headers: { userid: this.user.id }
+        }),
+        fetch(`${API_BASE}/donations`),
+        fetch(`${API_BASE}/meals`, {
+          headers: { userid: this.user.id }
+        }),
+        fetch(`${API_BASE}/chart`, {
+          headers: { userid: this.user.id }
+        })
+      ]);
+      this.inventory = await invRes.json();
+      this.donations = await donRes.json();
+      this.meals = await mealRes.json();
+      this.chartData = await chartRes.json();
+    } catch (err) {
+      console.error("Failed to load data:", err);
+    }
+  },
+
+  async addInventoryItem(item) {
+    const res = await fetch(`${API_BASE}/inventory`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        userid: this.user.id
+      },
+      body: JSON.stringify(item)
+    });
+    const newItem = await res.json();
+    this.inventory.unshift(newItem);
+    return newItem;
+  },
+
+  async removeInventoryItem(id) {
+    await fetch(`${API_BASE}/inventory/${id}`, {
+      method: "DELETE",
+      headers: { userid: this.user.id }
+    });
+    this.inventory = this.inventory.filter(item => item._id !== id);
   },
 
   guardAuth() {
