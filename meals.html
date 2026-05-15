@@ -12,7 +12,6 @@
         gap: 20px;
         align-items: start;
       }
-
       .cal-card {
         background: #fff;
         border: 1px solid var(--border);
@@ -59,8 +58,6 @@
         font-weight: 500;
         padding: 0 4px;
       }
-
-      /* Grid */
       .cal-grid {
         display: grid;
         grid-template-columns: repeat(7, 1fr);
@@ -105,6 +102,9 @@
         align-items: center;
         justify-content: center;
       }
+      .cal-cell.selected {
+        background: #eef4ff;
+      }
       .cal-cell.has-meal::after {
         content: "";
         position: absolute;
@@ -122,13 +122,11 @@
         text-align: center;
         min-width: 24px;
       }
-
       .meal-detail-card {
         background: var(--navy-card);
         color: #fff;
         border-radius: 14px;
         padding: 18px 20px;
-        position: relative;
       }
       .mdc-header {
         display: flex;
@@ -149,21 +147,16 @@
         color: rgba(255, 255, 255, 0.5);
         font-size: 18px;
         cursor: pointer;
-        line-height: 1;
         transition: color 0.2s;
       }
       .mdc-close:hover {
         color: #fff;
       }
-
       .meal-entry {
         background: rgba(255, 255, 255, 0.07);
         border-radius: 10px;
         padding: 12px 14px;
         margin-bottom: 10px;
-      }
-      .meal-entry:last-child {
-        margin-bottom: 0;
       }
       .meal-entry-top {
         display: flex;
@@ -177,16 +170,20 @@
         border-radius: 50%;
         flex-shrink: 0;
       }
+      .dot-Breakfast,
       .dot-breakfast {
         background: #f5a623;
       }
+      .dot-Lunch,
       .dot-lunch {
         background: #4caf50;
       }
+      .dot-Dinner,
       .dot-dinner {
         background: #e53935;
       }
-      .dot-meal {
+      .dot-Snack,
+      .dot-snack {
         background: #9ab5cc;
       }
       .meal-entry-name {
@@ -206,20 +203,24 @@
         font-size: 12px;
         color: #9ab5cc;
         margin-top: 4px;
-        line-height: 1.4;
       }
-      .meal-entry-notes span {
-        color: #cdd9e5;
-        font-weight: 500;
+      .meal-entry-del {
+        float: right;
+        background: none;
+        border: none;
+        color: rgba(255, 255, 255, 0.3);
+        cursor: pointer;
+        font-size: 14px;
       }
-
+      .meal-entry-del:hover {
+        color: #fff;
+      }
       .mdc-empty {
         text-align: center;
         color: #7a9ab5;
         font-size: 13px;
         padding: 24px 0;
       }
-
       .plan-modal {
         display: none;
         position: fixed;
@@ -263,7 +264,6 @@
         font-size: 18px;
         cursor: pointer;
         color: var(--text-muted);
-        line-height: 1;
       }
       .plan-close-btn:hover {
         color: var(--text);
@@ -302,10 +302,6 @@
       .plan-group textarea:focus {
         border-color: var(--navy);
       }
-      .plan-group input::placeholder,
-      .plan-group textarea::placeholder {
-        color: #bbb;
-      }
       .plan-group textarea {
         height: 72px;
       }
@@ -326,7 +322,6 @@
       .btn-add-meal:hover {
         background: #43a047;
       }
-
       .mp-title-row {
         display: flex;
         align-items: center;
@@ -340,6 +335,17 @@
         font-size: 24px;
         font-weight: 700;
       }
+      .inv-suggestion {
+        background: rgba(255, 255, 255, 0.07);
+        border-radius: 8px;
+        padding: 8px 10px;
+        margin-bottom: 8px;
+        font-size: 12px;
+        color: #9ab5cc;
+      }
+      .inv-suggestion strong {
+        color: #fff;
+      }
     </style>
   </head>
   <body>
@@ -348,9 +354,7 @@
       <div id="topbar-root"></div>
       <div class="page-content">
         <div class="mp-title-row">
-          <div class="mp-title">
-            Meal Planning
-          </div>
+          <div class="mp-title">🍽️ Meal Planning</div>
           <button class="btn-green" onclick="openPlanModal()">
             + add meal
           </button>
@@ -358,11 +362,10 @@
         <div class="page-sub">Plan and track your weekly meals</div>
 
         <div class="meal-layout">
-          <!-- LEFT: Calendar -->
           <div>
             <div class="cal-card">
               <div class="cal-header">
-                <div class="cal-month" id="cal-month-label">March</div>
+                <div class="cal-month" id="cal-month-label">May</div>
                 <div class="cal-nav">
                   <button class="cal-nav-btn" onclick="changeMonth(-1)">
                     ‹
@@ -375,21 +378,18 @@
               </div>
               <div class="cal-grid" id="cal-grid"></div>
             </div>
-
-            <div
-              id="day-meals-panel"
-              style="margin-top: 16px; display: none"
-            ></div>
           </div>
 
           <div>
             <div class="meal-detail-card" id="meal-detail-card">
               <div class="mdc-header">
                 <div class="mdc-title">
-                  📅 <span id="mdc-day-title">Monday</span>
+                  📅 <span id="mdc-day-title">Select a Day</span>
                 </div>
                 <button class="mdc-close" onclick="closeDetailCard()">✕</button>
               </div>
+              <!-- Expiring suggestions -->
+              <div id="expiry-suggestions"></div>
               <div id="mdc-body">
                 <div class="mdc-empty">
                   Select a day on the calendar<br />to see planned meals
@@ -410,10 +410,9 @@
           </div>
           <button class="plan-close-btn" onclick="closePlanModal()">✕</button>
         </div>
-
         <div class="plan-row">
           <div class="plan-group">
-            <label>Day</label>
+            <label>Day *</label>
             <select id="pm-day">
               <option value="">Select day</option>
               <option>Monday</option>
@@ -426,7 +425,7 @@
             </select>
           </div>
           <div class="plan-group">
-            <label>Meal Type</label>
+            <label>Meal Type *</label>
             <select id="pm-type">
               <option value="">Select type</option>
               <option>Breakfast</option>
@@ -436,12 +435,10 @@
             </select>
           </div>
         </div>
-
         <div class="plan-group">
-          <label>Meal Name</label>
+          <label>Meal Name *</label>
           <input type="text" id="pm-name" placeholder="e.g. Chicken Stir-fry" />
         </div>
-
         <div class="plan-group">
           <label>Ingredients</label>
           <textarea
@@ -449,7 +446,6 @@
             placeholder="List the ingredients you'll use..."
           ></textarea>
         </div>
-
         <div class="plan-group">
           <label>Notes (Optional)</label>
           <textarea
@@ -458,7 +454,6 @@
             style="height: 56px"
           ></textarea>
         </div>
-
         <button class="btn-add-meal" onclick="saveMeal()">Add Meal</button>
       </div>
     </div>
@@ -471,8 +466,6 @@
       document.getElementById("topbar-root").innerHTML =
         SavePlate.renderTopbar("Meal Planning");
 
-      const mealData = {};
-
       const today = new Date();
       const dayNames = [
         "Sunday",
@@ -483,36 +476,6 @@
         "Friday",
         "Saturday",
       ];
-      const shortNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-      const weekStart = new Date(today);
-      weekStart.setDate(today.getDate() - today.getDay() + 1); // Monday
-
-      // Map Mon–Sun from SavePlate.meals into mealData
-      const spDayMap = {
-        Mon: 0,
-        Tue: 1,
-        Wed: 2,
-        Thu: 3,
-        Fri: 4,
-        Sat: 5,
-        Sun: 6,
-      };
-      Object.entries(SavePlate.meals).forEach(([abbr, meals]) => {
-        const d = new Date(weekStart);
-        d.setDate(weekStart.getDate() + spDayMap[abbr]);
-        const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-        mealData[key] = meals.map((m) => ({
-          type: m.t,
-          name: m.n,
-          ingredients: "Use what you have in your inventory",
-          notes: "",
-        }));
-      });
-
-      let viewYear = today.getFullYear();
-      let viewMonth = today.getMonth();
-      let selectedKey = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
-
       const monthNames = [
         "January",
         "February",
@@ -527,62 +490,88 @@
         "November",
         "December",
       ];
+      const shortMap = {
+        Monday: "Mon",
+        Tuesday: "Tue",
+        Wednesday: "Wed",
+        Thursday: "Thu",
+        Friday: "Fri",
+        Saturday: "Sat",
+        Sunday: "Sun",
+      };
 
-      function dayKey(y, m, d) {
-        return `${y}-${m}-${d}`;
+      let viewYear = today.getFullYear();
+      let viewMonth = today.getMonth();
+      let selectedDate = null; // {y,m,d}
+
+      function calKey(y, m, d) {
+        return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+      }
+
+      /* Meals are stored keyed by short day names (Mon-Sun) for weekly repeat,
+       AND by ISO date keys for specific dates */
+      function getMealsForDay(y, m, d) {
+        const iso = calKey(y, m + 1, d); // YYYY-MM-DD key
+        const wday = dayNames[new Date(y, m, d).getDay()];
+        const abbr = shortMap[wday] || wday.slice(0, 3);
+        const all = SavePlate.meals;
+        return [...(all[iso] || []), ...(all[abbr] || [])];
+      }
+
+      function hasMealOnDay(y, m, d) {
+        return getMealsForDay(y, m, d).length > 0;
       }
 
       function renderCalendar() {
         document.getElementById("cal-month-label").textContent =
           monthNames[viewMonth];
         document.getElementById("cal-year-label").textContent = viewYear;
-
         const grid = document.getElementById("cal-grid");
         const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
         let html = days
           .map((d) => `<div class="cal-day-name">${d}</div>`)
           .join("");
-
         const firstDay = new Date(viewYear, viewMonth, 1).getDay();
         const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
         const daysInPrev = new Date(viewYear, viewMonth, 0).getDate();
-
         for (let i = firstDay - 1; i >= 0; i--) {
-          const d = daysInPrev - i;
-          const k = dayKey(viewYear, viewMonth - 1, d);
-          html += `<div class="cal-cell other-month" onclick="selectDay(${viewYear},${viewMonth - 1},${d})">
-          <span class="cal-num">${d}</span>
-        </div>`;
+          const d = daysInPrev - i,
+            pm = viewMonth - 1;
+          html += `<div class="cal-cell other-month" onclick="selectDay(${viewYear},${pm < 0 ? viewYear - 1 : viewYear},${pm < 0 ? 11 : pm},${d})"><span class="cal-num">${d}</span></div>`;
         }
-
         for (let d = 1; d <= daysInMonth; d++) {
-          const k = dayKey(viewYear, viewMonth, d);
           const isToday =
             viewYear === today.getFullYear() &&
             viewMonth === today.getMonth() &&
             d === today.getDate();
-          const isSelected = k === selectedKey;
-          const hasMeal = mealData[k] && mealData[k].length > 0;
+          const isSelected =
+            selectedDate &&
+            selectedDate.y === viewYear &&
+            selectedDate.m === viewMonth &&
+            selectedDate.d === d;
+          const hasMeal = hasMealOnDay(viewYear, viewMonth, d);
           const cls = [
             "cal-cell",
             isToday ? "today" : "",
             isSelected ? "selected" : "",
             hasMeal ? "has-meal" : "",
           ].join(" ");
-          html += `<div class="${cls}" onclick="selectDay(${viewYear},${viewMonth},${d})" style="${isSelected ? "background:#eef4ff;" : ""}">
-          <span class="cal-num">${d}</span>
-        </div>`;
+          html += `<div class="${cls}" onclick="selectDay(${viewYear},${viewYear},${viewMonth},${d})"><span class="cal-num">${d}</span></div>`;
         }
-
-        const totalCells = firstDay + daysInMonth;
-        const remaining = 42 - totalCells;
+        const remaining = 42 - (firstDay + daysInMonth);
         for (let d = 1; d <= remaining; d++) {
-          html += `<div class="cal-cell other-month" onclick="selectDay(${viewYear},${viewMonth + 1},${d})">
-          <span class="cal-num">${d}</span>
-        </div>`;
+          const nm = viewMonth + 1,
+            ny = nm > 11 ? viewYear + 1 : viewYear;
+          html += `<div class="cal-cell other-month" onclick="selectDay(${ny},${ny},${nm > 11 ? 0 : nm},${d})"><span class="cal-num">${d}</span></div>`;
         }
-
         grid.innerHTML = html;
+      }
+
+      function selectDay(_, y, m, d) {
+        selectedDate = { y, m, d };
+        viewYear = y;
+        viewMonth = m;
+        renderCalendar();
         renderDetailCard();
       }
 
@@ -599,64 +588,101 @@
         renderCalendar();
       }
 
-      function selectDay(y, m, d) {
-        selectedKey = dayKey(y, m, d);
-        viewYear = y;
-        viewMonth = m;
-        renderCalendar();
-      }
-
-      const dotClass = {
-        Breakfast: "dot-breakfast",
-        Lunch: "dot-lunch",
-        Dinner: "dot-dinner",
-        Snack: "dot-meal",
-        Meal: "dot-meal",
-      };
-
       function renderDetailCard() {
-        const parts = selectedKey.split("-");
-        const sd = new Date(+parts[0], +parts[1], +parts[2]);
-        const dayLabel = dayNames[sd.getDay()];
-        document.getElementById("mdc-day-title").textContent = dayLabel;
+        if (!selectedDate) return;
+        const { y, m, d } = selectedDate;
+        const sd = new Date(y, m, d);
+        document.getElementById("mdc-day-title").textContent =
+          `${dayNames[sd.getDay()]}, ${d} ${monthNames[m]}`;
+        const meals = getMealsForDay(y, m, d);
 
-        const meals = mealData[selectedKey] || [];
+        // Expiry suggestions
+        const expiring = SavePlate.inventory
+          .filter(
+            (i) =>
+              !i.usedUp &&
+              !i.donated &&
+              (i.status === "danger" || i.status === "warn"),
+          )
+          .slice(0, 3);
+        const suggEl = document.getElementById("expiry-suggestions");
+        suggEl.innerHTML = expiring.length
+          ? `
+        <div style="margin-bottom:12px;padding:10px 12px;background:rgba(245,166,35,0.15);border-radius:10px;">
+          <div style="font-size:11px;font-weight:700;color:#f5a623;margin-bottom:6px;">⚠️ USE THESE SOON</div>
+          ${expiring.map((i) => `<div class="inv-suggestion">${i.emoji} <strong>${i.name}</strong> — ${SavePlate.daysLeft(i.exp)} left</div>`).join("")}
+        </div>`
+          : "";
+
         const body = document.getElementById("mdc-body");
-
+        const dotClass = {
+          Breakfast: "dot-Breakfast",
+          Lunch: "dot-Lunch",
+          Dinner: "dot-Dinner",
+          Snack: "dot-Snack",
+        };
         if (meals.length === 0) {
-          body.innerHTML = `<div class="mdc-empty">No meals planned for ${dayLabel}.<br><br>
-          <span style="color:#9ab5cc;font-size:12px;cursor:pointer" onclick="openPlanModalFor('${dayLabel}')">＋ Add a meal for this day</span>
+          body.innerHTML = `<div class="mdc-empty">No meals planned.<br><br>
+          <span style="color:#9ab5cc;font-size:12px;cursor:pointer" onclick="openPlanModalFor('${dayNames[sd.getDay()]}')">＋ Add a meal for this day</span>
         </div>`;
         } else {
+          const wday = dayNames[sd.getDay()];
+          const abbr = shortMap[wday];
+          const iso = calKey(y, m + 1, d);
           body.innerHTML = meals
-            .map(
-              (m, i) => `
-          <div class="meal-entry">
+            .map((meal, i) => {
+              const type = meal.t || meal.type;
+              const name = meal.n || meal.name;
+              const ingr = meal.ingredients || "";
+              const notes = meal.notes || "";
+              return `<div class="meal-entry">
             <div class="meal-entry-top">
-              <span class="meal-type-dot ${dotClass[m.type] || "dot-meal"}"></span>
-              <span class="meal-entry-name">${m.name}</span>
+              <span class="meal-type-dot ${dotClass[type] || "dot-Snack"}"></span>
+              <span class="meal-entry-name">${name}</span>
+              <button class="meal-entry-del" onclick="deleteMeal('${iso}','${abbr}',${i})" title="Remove">✕</button>
             </div>
-            ${m.ingredients ? `<div class="meal-entry-ingr"><span>Ingredients:</span> ${m.ingredients}</div>` : ""}
-            ${m.notes ? `<div class="meal-entry-notes"><span>Notes:</span> ${m.notes}</div>` : ""}
-          </div>`,
-            )
+            ${ingr ? `<div class="meal-entry-ingr"><span>Ingredients:</span> ${ingr}</div>` : ""}
+            ${notes ? `<div class="meal-entry-notes">${notes}</div>` : ""}
+          </div>`;
+            })
             .join("");
         }
       }
 
+      function deleteMeal(isoKey, abbr, idx) {
+        const meals = SavePlate.meals;
+        // Try ISO key first, then abbr
+        const isoMeals = meals[isoKey] || [];
+        const abbrMeals = meals[abbr] || [];
+        if (idx < isoMeals.length) {
+          isoMeals.splice(idx, 1);
+          if (isoMeals.length === 0) delete meals[isoKey];
+          else meals[isoKey] = isoMeals;
+        } else {
+          const abbrIdx = idx - isoMeals.length;
+          abbrMeals.splice(abbrIdx, 1);
+          if (abbrMeals.length === 0) delete meals[abbr];
+          else meals[abbr] = abbrMeals;
+        }
+        SavePlate.meals = meals;
+        renderCalendar();
+        renderDetailCard();
+      }
+
       function closeDetailCard() {
+        selectedDate = null;
         document.getElementById("mdc-body").innerHTML =
           `<div class="mdc-empty">Select a day on the calendar<br>to see planned meals</div>`;
         document.getElementById("mdc-day-title").textContent = "Select a Day";
-        selectedKey = "";
+        document.getElementById("expiry-suggestions").innerHTML = "";
         renderCalendar();
       }
 
       function openPlanModal() {
         document.getElementById("plan-modal").classList.add("open");
       }
-      function openPlanModalFor(dayName) {
-        document.getElementById("pm-day").value = dayName;
+      function openPlanModalFor(day) {
+        document.getElementById("pm-day").value = day;
         openPlanModal();
       }
       function closePlanModal() {
@@ -669,45 +695,31 @@
         const name = document.getElementById("pm-name").value.trim();
         const ingr = document.getElementById("pm-ingr").value.trim();
         const notes = document.getElementById("pm-notes").value.trim();
-
         if (!day || !type || !name) {
           alert("Please fill in Day, Meal Type, and Meal Name.");
           return;
         }
-
-        const targetDayIdx = dayNames.indexOf(day);
-        const base = new Date(viewYear, viewMonth, 1);
-        let targetDate = new Date(viewYear, viewMonth, 1);
-        while (targetDate.getDay() !== targetDayIdx)
-          targetDate.setDate(targetDate.getDate() + 1);
-
-        const k = dayKey(
-          targetDate.getFullYear(),
-          targetDate.getMonth(),
-          targetDate.getDate(),
-        );
-        if (!mealData[k]) mealData[k] = [];
-        mealData[k].push({ type, name, ingredients: ingr, notes });
-
-        selectedKey = k;
+        // Store by day abbreviation for weekly repeat
+        const abbr = shortMap[day] || day.slice(0, 3);
+        const meals = SavePlate.meals;
+        if (!meals[abbr]) meals[abbr] = [];
+        meals[abbr].push({ t: type, n: name, ingredients: ingr, notes });
+        SavePlate.meals = meals;
         closePlanModal();
-
         ["pm-day", "pm-type", "pm-name", "pm-ingr", "pm-notes"].forEach(
-          (id) => {
-            document.getElementById(id).value = "";
-          },
+          (id) => (document.getElementById(id).value = ""),
         );
-
         renderCalendar();
+        if (selectedDate) renderDetailCard();
       }
 
-      document
-        .getElementById("plan-modal")
-        .addEventListener("click", function (e) {
-          if (e.target === this) closePlanModal();
-        });
+      document.getElementById("plan-modal").addEventListener("click", (e) => {
+        if (e.target.id === "plan-modal") closePlanModal();
+      });
 
       renderCalendar();
+      // Select today by default
+      selectDay(null, today.getFullYear(), today.getMonth(), today.getDate());
     </script>
   </body>
 </html>

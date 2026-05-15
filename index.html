@@ -14,7 +14,7 @@
         </div>
         <div class="onboard-divider"></div>
         <div class="onboard-right">
-          <h1>WELCOME BACK!</h1>
+          <h1>WELCOME TO<br />SAVEPLATE!</h1>
           <button
             class="btn-navy"
             style="width: auto; padding: 10px 26px"
@@ -25,5 +25,10 @@
         </div>
       </div>
     </div>
+    <script src="js/data.js"></script>
+    <script>
+      // If already logged in, go straight to dashboard
+      if (SavePlate.user) location.href = "dashboard.html";
+    </script>
   </body>
 </html>

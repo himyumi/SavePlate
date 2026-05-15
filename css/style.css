@@ -791,11 +791,11 @@ body {
 .auth-logo {
   font-size: 50px;
   display: block;
-  margin-bottom: 6px;
+  margin-bottom: 2px;
 }
 .auth-logo img {
-  width: 100px;
-  height: 100px;
+  width: 200px;
+  height: 200px;
   object-fit: contain;
 }
 .auth-title {
@@ -874,8 +874,8 @@ body {
   flex-shrink: 0;
 }
 .onboard-mascot img {
-  width: 150px;
-  height: 150px;
+  width: 200px;
+  height: 200px;
   object-fit: contain;
 }
 .onboard-divider {

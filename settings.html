@@ -5,6 +5,42 @@
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
     <title>SavePlate – Settings</title>
     <link rel="stylesheet" href="css/style.css" />
+    <style>
+      .danger-zone {
+        background: #fff5f5;
+        border: 1px solid #ffd0d0;
+        border-radius: 12px;
+        overflow: hidden;
+      }
+      .change-pw-form {
+        display: none;
+        padding: 16px 18px;
+        border-top: 1px solid var(--border);
+        background: #fafafa;
+      }
+      .change-pw-form.open {
+        display: block;
+      }
+      .pw-input {
+        width: 100%;
+        border: 1.5px solid var(--border);
+        border-radius: 8px;
+        padding: 9px 12px;
+        font-size: 13px;
+        font-family: "DM Sans", sans-serif;
+        outline: none;
+        margin-bottom: 8px;
+      }
+      .pw-input:focus {
+        border-color: var(--navy);
+      }
+      .save-msg {
+        color: var(--green);
+        font-size: 12px;
+        display: none;
+        margin-top: 6px;
+      }
+    </style>
   </head>
   <body>
     <div id="sidebar-root"></div>
@@ -23,47 +59,109 @@
         </div>
 
         <div class="settings-section">
-          <div class="settings-section-label">Account</div>
+          <div class="settings-section-label">Account & Security</div>
           <div class="settings-card">
             <div class="settings-row">
               <span class="settings-row-lbl">🔐 Two-Factor Authentication</span>
               <div
-                class="toggle on"
-                onclick="this.classList.toggle('on')"
+                class="toggle"
+                id="t-twofa"
+                onclick="toggleSetting('twofa', this)"
               ></div>
             </div>
             <div class="settings-row">
-              <span class="settings-row-lbl">Email Alerts</span>
+              <span class="settings-row-lbl">📧 Email Alerts</span>
               <div
-                class="toggle on"
-                onclick="this.classList.toggle('on')"
+                class="toggle"
+                id="t-emailAlerts"
+                onclick="toggleSetting('emailAlerts', this)"
               ></div>
             </div>
             <div class="settings-row">
-              <span class="settings-row-lbl">🔔 Notifications</span>
+              <span class="settings-row-lbl">🔔 Push Notifications</span>
               <div
-                class="toggle on"
-                onclick="this.classList.toggle('on')"
+                class="toggle"
+                id="t-notifs"
+                onclick="toggleSetting('notifs', this)"
               ></div>
             </div>
-            <div class="settings-row">
-              <span class="settings-row-lbl">🌙 Dark Mode</span>
-              <div class="toggle" onclick="this.classList.toggle('on')"></div>
+            <div
+              class="settings-row"
+              style="cursor: pointer"
+              onclick="
+                document.getElementById('pw-form').classList.toggle('open')
+              "
+            >
+              <span class="settings-row-lbl">🔑 Change Password</span>
+              <span style="color: #bbb; font-size: 14px">›</span>
+            </div>
+            <div class="change-pw-form" id="pw-form">
+              <input
+                class="pw-input"
+                type="password"
+                id="pw-current"
+                placeholder="Current password"
+              />
+              <input
+                class="pw-input"
+                type="password"
+                id="pw-new"
+                placeholder="New password"
+              />
+              <input
+                class="pw-input"
+                type="password"
+                id="pw-confirm"
+                placeholder="Confirm new password"
+              />
+              <button
+                class="btn-navy"
+                style="width: auto; padding: 8px 18px"
+                onclick="changePassword()"
+              >
+                Update Password
+              </button>
+              <div class="save-msg" id="pw-msg"></div>
             </div>
           </div>
         </div>
 
         <div class="settings-section">
+          <div class="settings-section-label">Preferences</div>
           <div class="settings-card">
+            <div class="settings-row">
+              <span class="settings-row-lbl">🌙 Dark Mode</span>
+              <div
+                class="toggle"
+                id="t-darkMode"
+                onclick="toggleSetting('darkMode', this)"
+              ></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-label">Data</div>
+          <div class="settings-card danger-zone">
+            <div
+              class="settings-row"
+              style="cursor: pointer"
+              onclick="clearData()"
+            >
+              <span class="settings-row-lbl" style="color: var(--amber)"
+                >🗑️ Clear All My Data</span
+              >
+              <span style="color: #bbb; font-size: 14px">›</span>
+            </div>
             <div
               class="settings-row"
               style="cursor: pointer"
               onclick="logout()"
             >
               <span class="settings-row-lbl" style="color: var(--red)"
-                >Log Out</span
+                >🚪 Log Out</span
               >
-              <span style="color: #bbb; font-size: 14px">></span>
+              <span style="color: #bbb; font-size: 14px">›</span>
             </div>
           </div>
         </div>
@@ -79,6 +177,79 @@
         SavePlate.renderTopbar("Settings");
       document.getElementById("pname").textContent = SavePlate.user.name;
       document.getElementById("pemail").textContent = SavePlate.user.email;
+
+      // Load settings
+      const s = SavePlate.settings;
+      ["twofa", "emailAlerts", "notifs", "darkMode"].forEach((key) => {
+        const el = document.getElementById("t-" + key);
+        if (el && s[key]) el.classList.add("on");
+      });
+
+      function toggleSetting(key, el) {
+        el.classList.toggle("on");
+        const s = SavePlate.settings;
+        s[key] = el.classList.contains("on");
+        SavePlate.settings = s;
+      }
+
+      function changePassword() {
+        const curr = document.getElementById("pw-current").value.trim();
+        const newPw = document.getElementById("pw-new").value.trim();
+        const confirm = document.getElementById("pw-confirm").value.trim();
+        const msgEl = document.getElementById("pw-msg");
+        if (!curr || !newPw || !confirm) {
+          msgEl.style.color = "var(--red)";
+          msgEl.textContent = "Please fill all fields.";
+          msgEl.style.display = "block";
+          return;
+        }
+        if (newPw !== confirm) {
+          msgEl.style.color = "var(--red)";
+          msgEl.textContent = "Passwords do not match.";
+          msgEl.style.display = "block";
+          return;
+        }
+        if (newPw.length < 6) {
+          msgEl.style.color = "var(--red)";
+          msgEl.textContent = "Password must be at least 6 characters.";
+          msgEl.style.display = "block";
+          return;
+        }
+        // Update stored password
+        const users = JSON.parse(localStorage.getItem("sp_users") || "[]");
+        const idx = users.findIndex((u) => u.email === SavePlate.user.email);
+        if (idx !== -1) {
+          users[idx].password = newPw;
+          localStorage.setItem("sp_users", JSON.stringify(users));
+        }
+        msgEl.style.color = "var(--green)";
+        msgEl.textContent = "✅ Password updated successfully!";
+        msgEl.style.display = "block";
+        ["pw-current", "pw-new", "pw-confirm"].forEach(
+          (id) => (document.getElementById(id).value = ""),
+        );
+      }
+
+      function clearData() {
+        if (
+          !confirm(
+            "This will clear all your inventory, meals, and donation data. Are you sure?",
+          )
+        )
+          return;
+        [
+          "sp_inventory",
+          "sp_donations",
+          "sp_meals",
+          "sp_notifs",
+          "sp_analytics",
+          "sp_nextId",
+          "sp_settings",
+        ].forEach((k) => localStorage.removeItem(k));
+        alert("Data cleared. The app will reload with fresh data.");
+        location.reload();
+      }
+
       function logout() {
         SavePlate.clearUser();
         location.href = "index.html";

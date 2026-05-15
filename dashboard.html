@@ -11,23 +11,31 @@
     <div class="main-wrap">
       <div id="topbar-root"></div>
       <div class="page-content">
+        <!-- GREETING -->
+        <div style="margin-bottom: 20px">
+          <div class="page-title" id="greeting">Good morning!</div>
+          <div class="page-sub">Here's your food waste overview for today.</div>
+        </div>
+
         <!-- STATS -->
         <div class="stats-row">
           <div class="stat-tile">
             <div class="s-label">Total Items</div>
-            <div class="s-val">24</div>
+            <div class="s-val" id="stat-total">—</div>
           </div>
           <div class="stat-tile">
             <div class="s-label">Expiring Soon</div>
-            <div class="s-val">5</div>
+            <div class="s-val" id="stat-expiring" style="color: var(--red)">
+              —
+            </div>
           </div>
           <div class="stat-tile">
-            <div class="s-label">Meal Plans</div>
-            <div class="s-val">3</div>
+            <div class="s-label">Donations Listed</div>
+            <div class="s-val" id="stat-donations">—</div>
           </div>
           <div class="stat-tile">
             <div class="s-label">Waste Saved</div>
-            <div class="s-val">12kg</div>
+            <div class="s-val" id="stat-saved">—</div>
           </div>
         </div>
 
@@ -39,28 +47,8 @@
           </div>
           <div class="dash-card">
             <div class="dash-card-title">📅 Upcoming Meals</div>
-            <div class="dash-card-sub">Your planned meals for the week</div>
-            <div class="meal-row">
-              <div class="day-pill">Today</div>
-              <div>
-                <div class="meal-name">Chicken Stir-fry with Spinach</div>
-                <div class="meal-type">Dinner</div>
-              </div>
-            </div>
-            <div class="meal-row">
-              <div class="day-pill">Tomorrow</div>
-              <div>
-                <div class="meal-name">Greek Yogurt Parfait</div>
-                <div class="meal-type">Breakfast</div>
-              </div>
-            </div>
-            <div class="meal-row">
-              <div class="day-pill">Saturday</div>
-              <div>
-                <div class="meal-name">Strawberry Smoothie</div>
-                <div class="meal-type">Breakfast</div>
-              </div>
-            </div>
+            <div class="dash-card-sub">Your planned meals this week</div>
+            <div id="meals-list"></div>
           </div>
         </div>
 
@@ -75,11 +63,8 @@
             <button class="quick-btn" onclick="location.href = 'meals.html'">
               <span class="qi">📅</span>Plan A Meal
             </button>
-            <button
-              class="quick-btn"
-              onclick="location.href = 'inventory.html'"
-            >
-              <span class="qi">⚠️</span>Check Expiring
+            <button class="quick-btn" onclick="location.href = 'browse.html'">
+              <span class="qi">🤝</span>Browse Donations
             </button>
           </div>
         </div>
@@ -89,26 +74,82 @@
     <script src="js/data.js"></script>
     <script>
       SavePlate.guardAuth();
+      SavePlate.updateInventoryStatus();
       document.getElementById("sidebar-root").innerHTML =
         SavePlate.renderSidebar("dashboard");
       document.getElementById("topbar-root").innerHTML =
         SavePlate.renderTopbar("Dashboard");
 
-      const expiring = SavePlate.inventory.filter(
+      // Greeting
+      const h = new Date().getHours();
+      const greet =
+        h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
+      document.getElementById("greeting").textContent =
+        `${greet}, ${SavePlate.user.name}! 👋`;
+
+      // Stats
+      const inv = SavePlate.inventory.filter((i) => !i.usedUp && !i.donated);
+      const expiring = inv.filter(
         (i) => i.status === "danger" || i.status === "warn",
       );
-      document.getElementById("exp-list").innerHTML = expiring
-        .map(
-          (i) => `
-      <div class="exp-row">
-        <div class="exp-row-icon">${i.emoji}</div>
-        <div>
-          <div class="exp-row-name">${i.name}</div>
-          <div class="exp-row-cat">${i.cat}</div>
-        </div>
-      </div>`,
-        )
-        .join("");
+      const analytics = SavePlate.analytics;
+      const totalSaved = analytics.reduce((a, b) => a + (b.saved || 0), 0);
+
+      document.getElementById("stat-total").textContent = inv.length;
+      document.getElementById("stat-expiring").textContent = expiring.length;
+      document.getElementById("stat-donations").textContent =
+        SavePlate.donations.filter((d) => !d.claimed).length;
+      document.getElementById("stat-saved").textContent =
+        totalSaved.toFixed(1) + "kg";
+
+      // Expiring list
+      document.getElementById("exp-list").innerHTML =
+        expiring.length === 0
+          ? `<div style="text-align:center;color:#aaa;padding:20px;font-size:13px;">✅ No items expiring soon!</div>`
+          : expiring
+              .slice(0, 5)
+              .map(
+                (i) => `
+        <div class="exp-row">
+          <div class="exp-row-icon">${i.emoji}</div>
+          <div style="flex:1">
+            <div class="exp-row-name">${i.name}</div>
+            <div class="exp-row-cat">${i.cat} · ${SavePlate.daysLeft(i.exp)}</div>
+          </div>
+          <span class="exp-badge ${i.status}" style="font-size:11px">⏰ ${i.status === "danger" ? "Urgent" : "Watch"}</span>
+        </div>`,
+              )
+              .join("");
+
+      // Upcoming meals
+      const meals = SavePlate.meals;
+      const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+      const today = new Date();
+      let mealHtml = "";
+      for (let offset = 0; offset <= 6; offset++) {
+        const d = new Date(today);
+        d.setDate(today.getDate() + offset);
+        const key = days[d.getDay()];
+        const dayMeals = meals[key];
+        if (dayMeals && dayMeals.length) {
+          const label =
+            offset === 0
+              ? "Today"
+              : offset === 1
+                ? "Tomorrow"
+                : d.toLocaleDateString("en-US", { weekday: "long" });
+          dayMeals.forEach((m) => {
+            mealHtml += `<div class="meal-row">
+            <div class="day-pill">${label}</div>
+            <div><div class="meal-name">${m.n || m.name}</div><div class="meal-type">${m.t || m.type}</div></div>
+          </div>`;
+          });
+          if (mealHtml.split("meal-row").length > 5) break;
+        }
+      }
+      document.getElementById("meals-list").innerHTML =
+        mealHtml ||
+        `<div style="text-align:center;color:#aaa;padding:20px;font-size:13px;">No meals planned. <a href="meals.html" style="color:var(--navy)">Plan now →</a></div>`;
     </script>
   </body>
 </html>

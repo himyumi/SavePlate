@@ -5,74 +5,72 @@
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
     <title>SavePlate – Notifications</title>
     <link rel="stylesheet" href="css/style.css" />
+    <style>
+      .notif-header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 18px;
+      }
+      .mark-all-btn {
+        background: none;
+        border: 1.5px solid var(--border);
+        border-radius: 8px;
+        padding: 7px 14px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        color: var(--text-muted);
+        font-family: "DM Sans", sans-serif;
+        transition: 0.2s;
+      }
+      .mark-all-btn:hover {
+        background: #f0f0f0;
+        color: var(--text);
+      }
+      .notif-row {
+        cursor: pointer;
+      }
+      .notif-row:hover {
+        background: #e8edf6;
+      }
+      .notif-action {
+        margin-top: 8px;
+      }
+      .notif-action a {
+        font-size: 12px;
+        color: var(--navy);
+        text-decoration: none;
+        font-weight: 600;
+      }
+      .notif-action a:hover {
+        text-decoration: underline;
+      }
+      .empty-notif {
+        text-align: center;
+        color: #aaa;
+        padding: 60px;
+        font-size: 14px;
+      }
+    </style>
   </head>
   <body>
     <div id="sidebar-root"></div>
     <div class="main-wrap">
       <div id="topbar-root"></div>
       <div class="page-content">
-        <div class="page-title">Notifications</div>
-        <div class="page-sub">
-          Stay updated on expiry alerts, donations, and activity
+        <div class="notif-header-row">
+          <div>
+            <div class="page-title">Notifications</div>
+            <div class="page-sub">
+              Stay updated on expiry alerts, donations, and activity
+            </div>
+          </div>
+          <button class="mark-all-btn" onclick="markAll()">
+            ✓ Mark all as read
+          </button>
         </div>
-
-        <div class="notif-list">
-          <div class="notif-row unread danger">
-            <span class="notif-ico">⚠️</span>
-            <div>
-              <div class="notif-t">Expiry Alert: Fresh Milk</div>
-              <div class="notif-d">
-                Your Fresh Milk (1L) expires tomorrow. Use it or consider
-                donating.
-              </div>
-              <div class="notif-time">2 hours ago</div>
-            </div>
-          </div>
-          <div class="notif-row unread success">
-            <span class="notif-ico">✅</span>
-            <div>
-              <div class="notif-t">Donation Claimed</div>
-              <div class="notif-d">
-                Your donated 2kg Basmati Rice has been claimed. Arrange pickup
-                by tomorrow.
-              </div>
-              <div class="notif-time">5 hours ago</div>
-            </div>
-          </div>
-          <div class="notif-row unread">
-            <span class="notif-ico">🍽️</span>
-            <div>
-              <div class="notif-t">Meal Plan Reminder</div>
-              <div class="notif-d">
-                You haven't planned meals for the weekend. Use your Broccoli and
-                Eggs soon.
-              </div>
-              <div class="notif-time">Yesterday</div>
-            </div>
-          </div>
-          <div class="notif-row">
-            <span class="notif-ico">🔒</span>
-            <div>
-              <div class="notif-t">Security: New Login Detected</div>
-              <div class="notif-d">
-                A new login to your account was detected. Change your password
-                if it wasn't you.
-              </div>
-              <div class="notif-time">2 days ago</div>
-            </div>
-          </div>
-          <div class="notif-row success">
-            <span class="notif-ico">🌿</span>
-            <div>
-              <div class="notif-t">Monthly Achievement Unlocked!</div>
-              <div class="notif-d">
-                You saved 7.2kg of food this month. You're in the top 20% of
-                SavePlate users!
-              </div>
-              <div class="notif-time">3 days ago</div>
-            </div>
-          </div>
-        </div>
+        <div class="notif-list" id="notif-list"></div>
       </div>
     </div>
 
@@ -83,6 +81,54 @@
         SavePlate.renderSidebar("");
       document.getElementById("topbar-root").innerHTML =
         SavePlate.renderTopbar("Notifications");
+
+      function render() {
+        const notifs = SavePlate.notifications;
+        if (notifs.length === 0) {
+          document.getElementById("notif-list").innerHTML =
+            `<div class="empty-notif">🎉 No notifications right now.</div>`;
+          return;
+        }
+        document.getElementById("notif-list").innerHTML = notifs
+          .map((n) => {
+            const linkMap = {
+              "⚠️": "inventory.html",
+              "📦": "inventory.html",
+              "🤝": "browse.html",
+              "✅": "browse.html",
+              "📅": "meals.html",
+              "📊": "analytics.html",
+              "🌿": "analytics.html",
+            };
+            const link = linkMap[n.icon] || "#";
+            return `<div class="notif-row ${n.read ? "" : "unread"} ${n.type}" onclick="markRead(${n.id})">
+          <span class="notif-ico">${n.icon}</span>
+          <div style="flex:1">
+            <div class="notif-t">${n.title}${!n.read ? ` <span style="background:var(--red);color:#fff;font-size:9px;padding:1px 6px;border-radius:20px;vertical-align:middle;margin-left:5px;">NEW</span>` : ""}</div>
+            <div class="notif-d">${n.body}</div>
+            <div class="notif-time">${n.time}</div>
+            ${link !== "#" ? `<div class="notif-action"><a href="${link}" onclick="event.stopPropagation()">View →</a></div>` : ""}
+          </div>
+        </div>`;
+          })
+          .join("");
+      }
+
+      function markRead(id) {
+        SavePlate.markNotifRead(id);
+        render();
+        // Refresh topbar badge
+        document.getElementById("topbar-root").innerHTML =
+          SavePlate.renderTopbar("Notifications");
+      }
+      function markAll() {
+        SavePlate.markAllRead();
+        render();
+        document.getElementById("topbar-root").innerHTML =
+          SavePlate.renderTopbar("Notifications");
+      }
+
+      render();
     </script>
   </body>
 </html>

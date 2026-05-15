@@ -5,6 +5,69 @@
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
     <title>SavePlate – Inventory</title>
     <link rel="stylesheet" href="css/style.css" />
+    <style>
+      .inv-actions {
+        display: flex;
+        gap: 6px;
+        margin-top: 12px;
+        flex-wrap: wrap;
+      }
+      .inv-action-btn {
+        flex: 1;
+        min-width: 80px;
+        border: none;
+        border-radius: 7px;
+        padding: 7px 6px;
+        font-family: "DM Sans", sans-serif;
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.2s;
+      }
+      .btn-used {
+        background: rgba(76, 175, 80, 0.2);
+        color: #66bb6a;
+      }
+      .btn-used:hover {
+        background: rgba(76, 175, 80, 0.35);
+      }
+      .btn-donate {
+        background: rgba(245, 166, 35, 0.2);
+        color: #f5a623;
+      }
+      .btn-donate:hover {
+        background: rgba(245, 166, 35, 0.35);
+      }
+      .btn-del {
+        background: rgba(229, 57, 53, 0.2);
+        color: var(--red);
+      }
+      .btn-del:hover {
+        background: rgba(229, 57, 53, 0.35);
+      }
+      .inv-card.used-card {
+        opacity: 0.55;
+      }
+      .inv-card.donated-card {
+        opacity: 0.55;
+        border: 2px solid #f5a623;
+      }
+      .status-tag {
+        font-size: 10px;
+        font-weight: 700;
+        padding: 2px 7px;
+        border-radius: 20px;
+        margin-left: 6px;
+      }
+      .status-tag.used {
+        background: rgba(76, 175, 80, 0.25);
+        color: #66bb6a;
+      }
+      .status-tag.donated {
+        background: rgba(245, 166, 35, 0.25);
+        color: #f5a623;
+      }
+    </style>
   </head>
   <body>
     <div id="sidebar-root"></div>
@@ -26,7 +89,7 @@
             <span class="search-icon">🔍</span>
             <input
               type="text"
-              placeholder="Search...."
+              placeholder="Search items..."
               oninput="filterInv(this.value)"
               id="search-input"
             />
@@ -42,23 +105,34 @@
             <option>Frozen</option>
             <option>Bakery</option>
           </select>
+          <select
+            class="cat-select"
+            id="status-filter"
+            onchange="filterStatus(this.value)"
+          >
+            <option value="">All Status</option>
+            <option value="danger">Expiring Soon</option>
+            <option value="warn">Watch</option>
+            <option value="ok">Fresh</option>
+          </select>
         </div>
 
         <div class="inv-grid" id="inv-grid"></div>
       </div>
     </div>
 
+    <!-- ADD MODAL -->
     <div class="modal-overlay" id="modal">
       <div class="modal-box">
         <div class="modal-title">Add Food Item</div>
         <div class="form-group">
-          <label>Item Name *</label
-          ><input type="text" id="f-name" placeholder="e.g. Fresh Milk" />
+          <label>Item Name *</label>
+          <input type="text" id="f-name" placeholder="e.g. Fresh Milk" />
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Quantity *</label
-            ><input type="text" id="f-qty" placeholder="e.g. 1 Liter" />
+            <label>Quantity *</label>
+            <input type="text" id="f-qty" placeholder="e.g. 1 Liter" />
           </div>
           <div class="form-group">
             <label>Category *</label>
@@ -71,12 +145,14 @@
               <option>Canned</option>
               <option>Frozen</option>
               <option>Bakery</option>
+              <option>Other</option>
             </select>
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Expiry Date *</label><input type="date" id="f-exp" />
+            <label>Expiry Date *</label>
+            <input type="date" id="f-exp" />
           </div>
           <div class="form-group">
             <label>Storage Location</label>
@@ -88,8 +164,8 @@
           </div>
         </div>
         <div class="form-group">
-          <label>Notes (optional)</label
-          ><input type="text" id="f-notes" placeholder="Any remarks..." />
+          <label>Notes (optional)</label>
+          <input type="text" id="f-notes" placeholder="Any remarks..." />
         </div>
         <div class="modal-actions">
           <button class="btn-cancel" onclick="closeModal()">Cancel</button>
@@ -104,47 +180,78 @@
       </div>
     </div>
 
+    <!-- CONVERT TO DONATION CONFIRM MODAL -->
+    <div class="modal-overlay" id="donate-modal">
+      <div class="modal-box" style="width: 360px">
+        <div class="modal-title">🤝 List for Donation?</div>
+        <p
+          style="font-size: 14px; color: #555; margin-bottom: 20px"
+          id="donate-msg"
+        >
+          This item will be listed for donation.
+        </p>
+        <div class="modal-actions">
+          <button class="btn-cancel" onclick="closeDonateModal()">
+            Cancel
+          </button>
+          <button
+            class="btn-navy"
+            style="width: auto; padding: 10px 22px; background: var(--amber)"
+            onclick="confirmDonate()"
+          >
+            Yes, List it!
+          </button>
+        </div>
+      </div>
+    </div>
+
     <script src="js/data.js"></script>
     <script>
       SavePlate.guardAuth();
+      SavePlate.updateInventoryStatus();
       document.getElementById("sidebar-root").innerHTML =
         SavePlate.renderSidebar("inventory");
       document.getElementById("topbar-root").innerHTML =
         SavePlate.renderTopbar("Inventory");
 
-      const catEmoji = {
-        Dairy: "🥛",
-        Fruits: "🍎",
-        Meat: "🍗",
-        Vegetables: "🥦",
-        Grains: "🌾",
-        Canned: "🥫",
-        Frozen: "❄️",
-        Bakery: "🍞",
-        Other: "🍽",
-      };
+      let searchQ = "",
+        catFilter = "",
+        statusFilter = "";
+      let pendingDonateId = null;
 
-      let view = [];
-
-      async function loadInventory() {
-        await SavePlate.loadData();
-        view = [...SavePlate.inventory];
-        renderGrid(view);
+      function getView() {
+        return SavePlate.inventory.filter((i) => {
+          const matchQ =
+            !searchQ || i.name.toLowerCase().includes(searchQ.toLowerCase());
+          const matchCat = !catFilter || i.cat === catFilter;
+          const matchSt = !statusFilter || i.status === statusFilter;
+          return matchQ && matchCat && matchSt;
+        });
       }
 
-      function renderGrid(data) {
+      function renderGrid() {
+        const data = getView();
+        if (data.length === 0) {
+          document.getElementById("inv-grid").innerHTML =
+            `<div style="grid-column:1/-1;text-align:center;color:#aaa;padding:40px;font-size:14px;">No items found.</div>`;
+          return;
+        }
         document.getElementById("inv-grid").innerHTML = data
-          .map(
-            (item, i) => `
-        <div class="inv-card">
+          .map((item) => {
+            const statusTag = item.usedUp
+              ? `<span class="status-tag used">Used</span>`
+              : item.donated
+                ? `<span class="status-tag donated">Donated</span>`
+                : "";
+            return `<div class="inv-card ${item.usedUp ? "used-card" : ""} ${item.donated ? "donated-card" : ""}">
           <div class="inv-card-header">
-            <div class="inv-icon">${catEmoji[item.cat] || "🍽"}</div>
+            <div class="inv-icon">${SavePlate.catEmoji[item.cat] || "🍽"}</div>
             <div>
-              <div class="inv-name">${item.name}</div>
+              <div class="inv-name">${item.name}${statusTag}</div>
               <div class="inv-cat">${item.cat}</div>
             </div>
           </div>
-          <button class="inv-close" onclick="removeItem('${item._id}', ${i})">✕</button>
+          <button class="inv-close" onclick="removeItem(${item.id})">✕</button>
           <div class="inv-row"><span class="inv-row-label">Quantity:</span><span>${item.qty}</span></div>
           <div class="inv-row"><span class="inv-row-label">Location:</span><span>${item.loc}</span></div>
           <div class="inv-row">
@@ -152,27 +259,54 @@
             <span class="exp-badge ${item.status}">⏰ ${SavePlate.daysLeft(item.exp)}</span>
           </div>
           <div class="inv-date">${new Date(item.exp).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</div>
-        </div>`,
-          )
+          ${
+            !item.usedUp && !item.donated
+              ? `<div class="inv-actions">
+            <button class="inv-action-btn btn-used"    onclick="markUsed(${item.id})">✅ Mark Used</button>
+            <button class="inv-action-btn btn-donate"  onclick="openDonateModal(${item.id},'${item.name}')">🤝 Donate</button>
+          </div>`
+              : ""
+          }
+        </div>`;
+          })
           .join("");
       }
 
       function filterInv(q) {
-        view = SavePlate.inventory.filter((i) =>
-          i.name.toLowerCase().includes(q.toLowerCase()),
-        );
-        renderGrid(view);
+        searchQ = q;
+        renderGrid();
       }
       function filterCat(c) {
-        view = c
-          ? SavePlate.inventory.filter((i) => i.cat === c)
-          : [...SavePlate.inventory];
-        renderGrid(view);
+        catFilter = c;
+        renderGrid();
       }
-      async function removeItem(id, idx) {
-        await SavePlate.removeInventoryItem(id);
-        view.splice(idx, 1);
-        renderGrid(view);
+      function filterStatus(s) {
+        statusFilter = s;
+        renderGrid();
+      }
+
+      function removeItem(id) {
+        if (!confirm("Remove this item?")) return;
+        SavePlate.removeInventoryItem(id);
+        renderGrid();
+      }
+      function markUsed(id) {
+        SavePlate.markItemUsed(id);
+        renderGrid();
+      }
+      function openDonateModal(id, name) {
+        pendingDonateId = id;
+        document.getElementById("donate-msg").textContent =
+          `"${name}" will be listed as a donation for others to claim.`;
+        document.getElementById("donate-modal").classList.add("open");
+      }
+      function closeDonateModal() {
+        document.getElementById("donate-modal").classList.remove("open");
+      }
+      function confirmDonate() {
+        SavePlate.convertToDonation(pendingDonateId);
+        closeDonateModal();
+        renderGrid();
       }
 
       function openModal() {
@@ -181,48 +315,44 @@
       function closeModal() {
         document.getElementById("modal").classList.remove("open");
       }
-      async function addItem() {
+      function addItem() {
         const name = document.getElementById("f-name").value.trim();
         const qty = document.getElementById("f-qty").value.trim();
         const cat = document.getElementById("f-cat").value;
         const exp = document.getElementById("f-exp").value;
         const loc = document.getElementById("f-loc").value;
-        const notes = document.getElementById("f-notes").value.trim();
         if (!name || !qty || !exp) {
-          alert("Please fill required fields.");
+          alert("Please fill required fields (*).");
           return;
         }
-        const diff = (new Date(exp) - new Date()) / (1000 * 60 * 60 * 24);
-        const status = diff <= 2 ? "danger" : diff <= 5 ? "warn" : "ok";
-        const newItem = {
+        if (new Date(exp) < new Date()) {
+          alert("Expiry date cannot be in the past.");
+          return;
+        }
+        SavePlate.addInventoryItem({
           name,
-          emoji: catEmoji[cat] || "🍽",
+          emoji: SavePlate.catEmoji[cat] || "🍽",
           cat,
           qty,
           loc,
           exp,
-          status,
-          notes,
-        };
-        await SavePlate.addInventoryItem(newItem);
-        view = [...SavePlate.inventory];
-        renderGrid(view);
+        });
+        renderGrid();
         closeModal();
-        // Clear form
-        document.getElementById("f-name").value = "";
-        document.getElementById("f-qty").value = "";
-        document.getElementById("f-exp").value = "";
-        document.getElementById("f-notes").value = "";
-      }
-
-      // Load data on page load
-      loadInventory();
         ["f-name", "f-qty", "f-exp", "f-notes"].forEach(
           (id) => (document.getElementById(id).value = ""),
         );
       }
 
-      renderGrid(view);
+      // Close modal on backdrop click
+      document.getElementById("modal").addEventListener("click", (e) => {
+        if (e.target.id === "modal") closeModal();
+      });
+      document.getElementById("donate-modal").addEventListener("click", (e) => {
+        if (e.target.id === "donate-modal") closeDonateModal();
+      });
+
+      renderGrid();
     </script>
   </body>
 </html>

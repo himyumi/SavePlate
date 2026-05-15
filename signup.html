@@ -13,9 +13,13 @@
           ><img src="images/Logo.png" alt="SavePlate Logo"
         /></span>
         <div class="auth-title">Create Account</div>
-        <div class="auth-sub">Join SavePlate today</div>
         <label class="auth-field-label">Name</label>
-        <input class="auth-input" type="text" id="name" placeholder="Name" />
+        <input
+          class="auth-input"
+          type="text"
+          id="name"
+          placeholder="Your name"
+        />
         <label class="auth-field-label">Email</label>
         <input
           class="auth-input"
@@ -30,7 +34,9 @@
           id="pass"
           placeholder="••••••••"
         />
-        <a class="auth-link" href="login.html">Already have an account?</a>
+        <a class="auth-link" href="login.html"
+          >Already have an account? Log in</a
+        >
         <button class="btn-navy" onclick="doSignup()">Sign Up</button>
         <p
           id="err"
@@ -47,7 +53,7 @@
     </div>
     <script src="js/data.js"></script>
     <script>
-      async function doSignup() {
+      function doSignup() {
         const n = document.getElementById("name").value.trim();
         const e = document.getElementById("email").value.trim();
         const p = document.getElementById("pass").value.trim();
@@ -55,25 +61,25 @@
           document.getElementById("err").style.display = "block";
           return;
         }
-        try {
-          const res = await fetch(`${API_BASE}/auth/signup`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name: n, email: e, password: p })
-          });
-          const data = await res.json();
-          if (data.success) {
-            SavePlate.setUser(data.user);
-            location.href = "dashboard.html";
-          } else {
-            document.getElementById("err").textContent = data.message || "Signup failed";
-            document.getElementById("err").style.display = "block";
-          }
-        } catch (err) {
-          console.error("Signup error:", err);
-          document.getElementById("err").textContent = "Network error";
+        // Validate email format
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) {
+          document.getElementById("err").textContent =
+            "Please enter a valid email.";
           document.getElementById("err").style.display = "block";
+          return;
         }
+        // Check duplicate
+        const users = JSON.parse(localStorage.getItem("sp_users") || "[]");
+        if (users.find((u) => u.email === e)) {
+          document.getElementById("err").textContent =
+            "Email already registered.";
+          document.getElementById("err").style.display = "block";
+          return;
+        }
+        users.push({ name: n, email: e, password: p });
+        localStorage.setItem("sp_users", JSON.stringify(users));
+        SavePlate.setUser({ name: n, email: e });
+        location.href = "dashboard.html";
       }
       document.addEventListener("keydown", (ev) => {
         if (ev.key === "Enter") doSignup();
