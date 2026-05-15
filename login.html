@@ -5,14 +5,148 @@
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
     <title>SavePlate – Log In</title>
     <link rel="stylesheet" href="css/style.css" />
+    <style>
+      .mock-email-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.55);
+        z-index: 300;
+        align-items: center;
+        justify-content: center;
+      }
+      .mock-email-overlay.open {
+        display: flex;
+        animation: fadeUp 0.25s;
+      }
+      .mock-email-box {
+        background: #fff;
+        border-radius: 16px;
+        width: 400px;
+        max-width: 95vw;
+        box-shadow: 0 24px 64px rgba(0, 0, 0, 0.22);
+        overflow: hidden;
+      }
+      .email-header {
+        background: var(--navy);
+        color: #fff;
+        padding: 18px 22px 14px;
+      }
+      .email-header-label {
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: #9ab5cc;
+        margin-bottom: 4px;
+      }
+      .email-subject {
+        font-size: 15px;
+        font-weight: 700;
+      }
+      .email-meta {
+        font-size: 11px;
+        color: #9ab5cc;
+        margin-top: 4px;
+      }
+      .email-body {
+        padding: 22px 24px;
+      }
+      .email-greeting {
+        font-size: 14px;
+        color: var(--text);
+        margin-bottom: 14px;
+        line-height: 1.5;
+      }
+      .code-display {
+        background: #f0f4ff;
+        border: 2px dashed var(--navy);
+        border-radius: 12px;
+        text-align: center;
+        padding: 18px;
+        margin: 16px 0;
+      }
+      .code-label {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        margin-bottom: 8px;
+      }
+      .code-number {
+        font-size: 38px;
+        font-weight: 700;
+        letter-spacing: 10px;
+        color: var(--navy);
+        font-family: monospace;
+      }
+      .code-expiry {
+        font-size: 11px;
+        color: var(--text-muted);
+        margin-top: 6px;
+      }
+      .timer-bar-wrap {
+        height: 4px;
+        background: #eee;
+        border-radius: 2px;
+        overflow: hidden;
+        margin-top: 8px;
+      }
+      .timer-bar {
+        height: 100%;
+        background: var(--green);
+        border-radius: 2px;
+        transition:
+          width 1s linear,
+          background 0.3s;
+      }
+      .email-note {
+        font-size: 12px;
+        color: var(--text-muted);
+        line-height: 1.5;
+        border-top: 1px solid var(--border);
+        padding-top: 14px;
+        margin-top: 4px;
+      }
+      .btn-got-it {
+        width: 100%;
+        background: var(--navy);
+        color: #fff;
+        border: none;
+        border-radius: 9px;
+        padding: 12px;
+        font-family: "DM Sans", sans-serif;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        margin-top: 16px;
+        transition: 0.2s;
+      }
+      .btn-got-it:hover {
+        background: var(--navy-dark);
+      }
+      .twofa-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #e8f5e9;
+        color: #2e7d32;
+        font-size: 12px;
+        font-weight: 600;
+        padding: 5px 12px;
+        border-radius: 20px;
+        margin-bottom: 14px;
+      }
+    </style>
   </head>
   <body>
     <div class="auth-page">
       <div class="auth-card">
-        <span class="auth-logo"
-          ><img src="images/Logo.png" alt="SavePlate Logo"
-        /></span>
+        <span class="auth-logo"><img src="images/Logo.png" alt="SavePlate Logo" /></span>
         <div class="auth-title">SavePlate</div>
+        <div class="auth-sub">Smart food waste reduction</div>
+
         <label class="auth-field-label">Email</label>
         <input
           class="auth-input"
@@ -20,6 +154,7 @@
           id="email"
           placeholder="you@email.com"
         />
+
         <label class="auth-field-label">Password</label>
         <input
           class="auth-input"
@@ -27,6 +162,7 @@
           id="pass"
           placeholder="••••••••"
         />
+
         <a class="auth-link" href="signup.html"
           >Don't have an account? Sign up</a
         >
@@ -39,33 +175,136 @@
             margin-top: 10px;
             display: none;
           "
-        >
-          Please fill in all fields.
-        </p>
+        ></p>
       </div>
     </div>
+
+    <!-- Mock Email Modal (shown when 2FA is triggered on login) -->
+    <div class="mock-email-overlay" id="email-modal">
+      <div class="mock-email-box">
+        <div class="email-header">
+          <div class="email-header-label">📬 Simulated Email — Demo Mode</div>
+          <div class="email-subject">SavePlate Login Verification</div>
+          <div class="email-meta">
+            From: noreply@saveplate.app &nbsp;·&nbsp; To:
+            <span id="email-to"></span>
+          </div>
+        </div>
+        <div class="email-body">
+          <div class="email-greeting">
+            Hi <strong id="email-name"></strong>! 👋<br /><br />
+            A login attempt was made on your SavePlate account. Enter the code
+            below to confirm it was you.
+          </div>
+          <div class="code-display">
+            <div class="code-label">Your Login Verification Code</div>
+            <div class="code-number" id="code-display">000000</div>
+            <div class="code-expiry">
+              ⏱ Expires in <span id="timer-text">5:00</span>
+            </div>
+            <div class="timer-bar-wrap">
+              <div class="timer-bar" id="timer-bar" style="width: 100%"></div>
+            </div>
+          </div>
+          <div class="email-note">
+            ⚠️ <strong>Demo note:</strong> In a real app, this code would be
+            sent to your email. Shown here for prototype demonstration only.
+          </div>
+          <button class="btn-got-it" onclick="goToVerify()">
+            Got it — Enter Code →
+          </button>
+        </div>
+      </div>
+    </div>
+
     <script src="js/data.js"></script>
     <script>
+      let timerInterval = null;
+      let countdown = 300;
+
       function doLogin() {
-        const e = document.getElementById("email").value.trim();
-        const p = document.getElementById("pass").value.trim();
-        if (!e || !p) {
-          document.getElementById("err").style.display = "block";
+        const email = document.getElementById("email").value.trim();
+        const pass = document.getElementById("pass").value.trim();
+        const errEl = document.getElementById("err");
+
+        if (!email || !pass) {
+          errEl.textContent = "Please fill in all fields.";
+          errEl.style.display = "block";
           return;
         }
-        // Check registered users
+        errEl.style.display = "none";
+
         const users = JSON.parse(localStorage.getItem("sp_users") || "[]");
-        const match = users.find((u) => u.email === e && u.password === p);
-        if (!match && users.length > 0) {
-          document.getElementById("err").textContent =
-            "Invalid email or password.";
-          document.getElementById("err").style.display = "block";
+        const match = users.find(
+          (u) => u.email === email && u.password === pass,
+        );
+
+        if (users.length > 0 && !match) {
+          errEl.textContent = "❌ Invalid email or password.";
+          errEl.style.display = "block";
           return;
         }
-        const name = match ? match.name : e.split("@")[0];
-        SavePlate.setUser({ name, email: e });
-        location.href = "dashboard.html";
+
+        const name = match ? match.name : email.split("@")[0];
+        const has2fa = match ? match.twofa : false;
+
+        // Check settings override (if 2FA was enabled later in settings)
+        const settings = JSON.parse(
+          localStorage.getItem("sp_settings") || "{}",
+        );
+        const enforce2fa = has2fa || settings.twofa;
+
+        if (enforce2fa) {
+          // Trigger 2FA challenge
+          const code = String(Math.floor(100000 + Math.random() * 900000));
+          const expiry = Date.now() + 5 * 60 * 1000;
+          sessionStorage.setItem(
+            "sp_pending",
+            JSON.stringify({ name, email, code, expiry }),
+          );
+          sessionStorage.setItem("sp_verify_mode", "login");
+
+          document.getElementById("email-to").textContent = email;
+          document.getElementById("email-name").textContent =
+            name.split(" ")[0];
+          document.getElementById("code-display").textContent = code;
+          document.getElementById("email-modal").classList.add("open");
+          startTimer();
+        } else {
+          // No 2FA — log straight in
+          SavePlate.setUser({ name, email });
+          location.href = "dashboard.html";
+        }
       }
+
+      function startTimer() {
+        countdown = 300;
+        clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+          countdown--;
+          const m = Math.floor(countdown / 60);
+          const s = countdown % 60;
+          document.getElementById("timer-text").textContent =
+            `${m}:${String(s).padStart(2, "0")}`;
+          document.getElementById("timer-bar").style.width =
+            (countdown / 300) * 100 + "%";
+          if (countdown <= 60)
+            document.getElementById("timer-bar").style.background =
+              "var(--red)";
+          if (countdown <= 0) {
+            clearInterval(timerInterval);
+            document.getElementById("timer-text").textContent = "Expired";
+            document.getElementById("timer-bar").style.width = "0%";
+          }
+        }, 1000);
+      }
+
+      function goToVerify() {
+        clearInterval(timerInterval);
+        document.getElementById("email-modal").classList.remove("open");
+        location.href = "verify.html";
+      }
+
       document.addEventListener("keydown", (ev) => {
         if (ev.key === "Enter") doLogin();
       });
