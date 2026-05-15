@@ -217,14 +217,18 @@
       </div>
     </div>
 
+    <script src="https://www.gstatic.com/firebasejs/10.7.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.2/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
     <script src="js/data.js"></script>
     <script>
       let timerInterval = null;
       let countdown = 300;
 
-      function doLogin() {
+      async function doLogin() {
         const email = document.getElementById("email").value.trim();
-        const pass = document.getElementById("pass").value.trim();
+        const pass  = document.getElementById("pass").value.trim();
         const errEl = document.getElementById("err");
 
         if (!email || !pass) {
@@ -234,46 +238,38 @@
         }
         errEl.style.display = "none";
 
-        const users = JSON.parse(localStorage.getItem("sp_users") || "[]");
-        const match = users.find(
-          (u) => u.email === email && u.password === pass,
-        );
+        try {
+          const result = await firebase.auth().signInWithEmailAndPassword(email, pass);
+          const uid    = result.user.uid;
 
-        if (users.length > 0 && !match) {
-          errEl.textContent = "❌ Invalid email or password.";
-          errEl.style.display = "block";
-          return;
-        }
+          // Load profile to get name + 2FA preference
+          const profileDoc = await firebase.firestore().collection("users").doc(uid).get();
+          const profile    = profileDoc.exists ? profileDoc.data() : {};
+          const name       = profile.name || email.split("@")[0];
+          const twofa      = profile.twofa !== false;
 
-        const name = match ? match.name : email.split("@")[0];
-        const has2fa = match ? match.twofa : false;
+          if (twofa) {
+            const code   = String(Math.floor(100000 + Math.random() * 900000));
+            const expiry = Date.now() + 5 * 60 * 1000;
+            sessionStorage.setItem("sp_pending",     JSON.stringify({ name, email, code, expiry }));
+            sessionStorage.setItem("sp_verify_mode", "login");
 
-        // Check settings override (if 2FA was enabled later in settings)
-        const settings = JSON.parse(
-          localStorage.getItem("sp_settings") || "{}",
-        );
-        const enforce2fa = has2fa || settings.twofa;
-
-        if (enforce2fa) {
-          // Trigger 2FA challenge
-          const code = String(Math.floor(100000 + Math.random() * 900000));
-          const expiry = Date.now() + 5 * 60 * 1000;
-          sessionStorage.setItem(
-            "sp_pending",
-            JSON.stringify({ name, email, code, expiry }),
-          );
-          sessionStorage.setItem("sp_verify_mode", "login");
-
-          document.getElementById("email-to").textContent = email;
-          document.getElementById("email-name").textContent =
-            name.split(" ")[0];
-          document.getElementById("code-display").textContent = code;
-          document.getElementById("email-modal").classList.add("open");
-          startTimer();
-        } else {
-          // No 2FA — log straight in
-          SavePlate.setUser({ name, email });
-          location.href = "dashboard.html";
+            document.getElementById("email-to").textContent      = email;
+            document.getElementById("email-name").textContent    = name.split(" ")[0];
+            document.getElementById("code-display").textContent  = code;
+            document.getElementById("email-modal").classList.add("open");
+            startTimer();
+          } else {
+            location.href = "dashboard.html";
+          }
+        } catch (err) {
+          let msg = "❌ Invalid email or password.";
+          if (err.code === "auth/user-not-found")    msg = "❌ No account found with this email.";
+          else if (err.code === "auth/wrong-password" || err.code === "auth/invalid-credential") msg = "❌ Incorrect password.";
+          else if (err.code === "auth/invalid-email") msg = "❌ Invalid email address.";
+          else if (err.code === "auth/too-many-requests") msg = "❌ Too many failed attempts. Try again later.";
+          errEl.textContent    = msg;
+          errEl.style.display  = "block";
         }
       }
 

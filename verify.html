@@ -167,6 +167,10 @@
     </div>
   </div>
 
+  <script src="https://www.gstatic.com/firebasejs/10.7.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.2/firebase-firestore-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
   <script src="js/data.js"></script>
   <script>
     // ── Load pending data ──────────────────────────────────────
@@ -269,35 +273,39 @@
         clearInterval(timerInterval);
         errEl.textContent = "";
 
+        function showSuccess(title, sub) {
+          document.getElementById("success-overlay").classList.add("open");
+          if (title) document.querySelector(".success-title").textContent = title;
+          if (sub)   document.querySelector(".success-sub").textContent   = sub;
+          setTimeout(() => { document.getElementById("redirect-bar").style.width = "100%"; }, 50);
+          setTimeout(() => location.href = "dashboard.html", 2200);
+        }
+
         if (mode === "signup") {
-          // Save user to localStorage
-          const users = JSON.parse(localStorage.getItem("sp_users") || "[]");
-          users.push({
-            name:      pending.name,
-            email:     pending.email,
-            password:  pending.pass,
-            twofa:     true
-          });
-          localStorage.setItem("sp_users", JSON.stringify(users));
-          SavePlate.setUser({ name: pending.name, email: pending.email });
+          // Create Firebase account + save profile to Firestore
+          firebase.auth().createUserWithEmailAndPassword(pending.email, pending.pass)
+            .then(result => {
+              return firebase.firestore().collection("users").doc(result.user.uid)
+                .set({ name: pending.name, twofa: pending.use2fa !== false });
+            })
+            .then(() => {
+              sessionStorage.removeItem("sp_pending");
+              sessionStorage.removeItem("sp_verify_mode");
+              showSuccess(null, null);
+            })
+            .catch(err => {
+              inputs.forEach(i => i.classList.add("error"));
+              setTimeout(() => inputs.forEach(i => i.classList.remove("error")), 400);
+              errEl.textContent = "❌ " + (err.code === "auth/email-already-in-use"
+                ? "Email already registered. Please log in."
+                : err.message);
+            });
         } else {
-          // Login 2FA — just set session
-          SavePlate.setUser({ name: pending.name, email: pending.email });
+          // Login 2FA — Firebase session already active from login.html
+          sessionStorage.removeItem("sp_pending");
+          sessionStorage.removeItem("sp_verify_mode");
+          showSuccess("Identity Verified!", "Two-Factor Authentication passed. Redirecting to your dashboard...");
         }
-
-        sessionStorage.removeItem("sp_pending");
-        sessionStorage.removeItem("sp_verify_mode");
-
-        // Show success overlay then redirect
-        document.getElementById("success-overlay").classList.add("open");
-        if (mode === "login") {
-          document.querySelector(".success-title").textContent = "Identity Verified!";
-          document.querySelector(".success-sub").textContent   = "Two-Factor Authentication passed. Redirecting to your dashboard...";
-        }
-        setTimeout(() => {
-          document.getElementById("redirect-bar").style.width = "100%";
-        }, 50);
-        setTimeout(() => location.href = "dashboard.html", 2200);
 
       } else {
         // ❌ Wrong code

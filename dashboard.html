@@ -71,8 +71,13 @@
       </div>
     </div>
 
+    <script src="https://www.gstatic.com/firebasejs/10.7.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.2/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
     <script src="js/data.js"></script>
     <script>
+      SavePlate.ready.then(function () {
       SavePlate.guardAuth();
       SavePlate.updateInventoryStatus();
       document.getElementById("sidebar-root").innerHTML =
@@ -150,6 +155,7 @@
       document.getElementById("meals-list").innerHTML =
         mealHtml ||
         `<div style="text-align:center;color:#aaa;padding:20px;font-size:13px;">No meals planned. <a href="meals.html" style="color:var(--navy)">Plan now →</a></div>`;
+      }); // end SavePlate.ready.then
     </script>
   </body>
 </html>
