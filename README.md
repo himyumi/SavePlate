@@ -1,6 +1,6 @@
 # SavePlate
 
-A food inventory and meal planning app with MongoDB backend.
+A food inventory and meal planning app with MongoDB as its backend.
 
 ## Setup
 
