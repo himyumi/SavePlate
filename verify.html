@@ -1,344 +1,327 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>SavePlate – Verify Your Account</title>
-  <link rel="stylesheet" href="css/style.css" />
-  <style>
-    .verify-card {
-      background: #fff;
-      border-radius: 18px;
-      padding: 40px 36px;
-      width: 380px;
-      max-width: 95vw;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-      text-align: center;
-    }
-    .verify-icon { font-size: 52px; display: block; margin-bottom: 10px; }
-    .verify-title { font-size: 22px; font-weight: 700; color: var(--navy); margin-bottom: 6px; }
-    .verify-sub   { font-size: 13px; color: var(--text-muted); margin-bottom: 28px; line-height: 1.5; }
-    .verify-sub strong { color: var(--text); }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>SavePlate – Verify Your Account</title>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <div class="auth-page">
+      <div class="verify-card">
+        <span class="verify-icon">🔐</span>
+        <div class="verify-title">Verify Your Account</div>
+        <div class="verify-sub" id="verify-sub">
+          We sent a 6-digit code to<br /><strong id="email-display"
+            >your email</strong
+          >.<br />
+          Enter it below to continue.
+        </div>
 
-    /* 6 separate digit boxes */
-    .code-inputs {
-      display: flex;
-      gap: 10px;
-      justify-content: center;
-      margin-bottom: 22px;
-    }
-    .code-input {
-      width: 48px;
-      height: 56px;
-      border: 2px solid var(--border);
-      border-radius: 10px;
-      font-size: 24px;
-      font-weight: 700;
-      text-align: center;
-      font-family: monospace;
-      color: var(--navy);
-      outline: none;
-      transition: border-color 0.2s;
-    }
-    .code-input:focus { border-color: var(--navy); background: #f0f4ff; }
-    .code-input.filled { border-color: var(--navy); }
-    .code-input.error  { border-color: var(--red); background: #fff5f5; animation: shake 0.3s; }
+        <div class="code-inputs" id="code-inputs">
+          <input
+            class="code-input"
+            type="text"
+            maxlength="1"
+            inputmode="numeric"
+            pattern="[0-9]"
+            id="d0"
+          />
+          <input
+            class="code-input"
+            type="text"
+            maxlength="1"
+            inputmode="numeric"
+            pattern="[0-9]"
+            id="d1"
+          />
+          <input
+            class="code-input"
+            type="text"
+            maxlength="1"
+            inputmode="numeric"
+            pattern="[0-9]"
+            id="d2"
+          />
+          <input
+            class="code-input"
+            type="text"
+            maxlength="1"
+            inputmode="numeric"
+            pattern="[0-9]"
+            id="d3"
+          />
+          <input
+            class="code-input"
+            type="text"
+            maxlength="1"
+            inputmode="numeric"
+            pattern="[0-9]"
+            id="d4"
+          />
+          <input
+            class="code-input"
+            type="text"
+            maxlength="1"
+            inputmode="numeric"
+            pattern="[0-9]"
+            id="d5"
+          />
+        </div>
 
-    @keyframes shake {
-      0%,100% { transform: translateX(0); }
-      25%      { transform: translateX(-6px); }
-      75%      { transform: translateX(6px); }
-    }
+        <div class="verify-timer">
+          <span>⏱ Code expires in</span>
+          <span class="timer-count" id="timer-count">5:00</span>
+        </div>
 
-    .verify-timer {
-      font-size: 13px;
-      color: var(--text-muted);
-      margin-bottom: 18px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-    .timer-count { font-weight: 700; color: var(--navy); min-width: 36px; }
-    .timer-count.urgent { color: var(--red); }
+        <div class="err-msg" id="err-msg"></div>
 
-    .resend-btn {
-      background: none;
-      border: none;
-      color: var(--navy);
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      font-family: "DM Sans", sans-serif;
-      text-decoration: underline;
-      display: none;
-    }
-    .resend-btn.visible { display: inline; }
+        <button class="btn-navy" onclick="verifyCode()">
+          Verify & Continue
+        </button>
 
-    .err-msg {
-      color: var(--red);
-      font-size: 12px;
-      margin-bottom: 14px;
-      min-height: 18px;
-    }
-    .attempts-left {
-      font-size: 11px;
-      color: var(--text-muted);
-      margin-top: 10px;
-    }
-    .back-link {
-      display: block;
-      margin-top: 18px;
-      font-size: 13px;
-      color: var(--text-muted);
-      text-decoration: none;
-    }
-    .back-link:hover { color: var(--navy); }
-    .success-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.5);
-      z-index: 300;
-      align-items: center;
-      justify-content: center;
-    }
-    .success-overlay.open { display: flex; animation: fadeUp 0.2s; }
-    .success-box {
-      background: #fff;
-      border-radius: 16px;
-      padding: 40px 36px;
-      text-align: center;
-      width: 340px;
-      box-shadow: 0 24px 64px rgba(0,0,0,0.2);
-    }
-    .success-icon  { font-size: 60px; margin-bottom: 12px; }
-    .success-title { font-size: 20px; font-weight: 700; color: var(--navy); margin-bottom: 8px; }
-    .success-sub   { font-size: 13px; color: var(--text-muted); margin-bottom: 22px; }
-  </style>
-</head>
-<body>
-  <div class="auth-page">
-    <div class="verify-card">
-      <span class="verify-icon">🔐</span>
-      <div class="verify-title">Verify Your Account</div>
-      <div class="verify-sub" id="verify-sub">
-        We sent a 6-digit code to<br><strong id="email-display">your email</strong>.<br>
-        Enter it below to continue.
-      </div>
+        <div class="attempts-left" id="attempts-left"></div>
 
-      <div class="code-inputs" id="code-inputs">
-        <input class="code-input" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" id="d0" />
-        <input class="code-input" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" id="d1" />
-        <input class="code-input" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" id="d2" />
-        <input class="code-input" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" id="d3" />
-        <input class="code-input" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" id="d4" />
-        <input class="code-input" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" id="d5" />
-      </div>
+        <button class="resend-btn" id="resend-btn" onclick="resendCode()">
+          🔄 Resend a new code
+        </button>
 
-      <div class="verify-timer">
-        <span>⏱ Code expires in</span>
-        <span class="timer-count" id="timer-count">5:00</span>
-      </div>
-
-      <div class="err-msg" id="err-msg"></div>
-
-      <button class="btn-navy" onclick="verifyCode()">Verify & Continue</button>
-
-      <div class="attempts-left" id="attempts-left"></div>
-
-      <button class="resend-btn" id="resend-btn" onclick="resendCode()">
-        🔄 Resend a new code
-      </button>
-
-      <a class="back-link" href="signup.html" id="back-link">← Back to sign up</a>
-    </div>
-  </div>
-
-  <!-- Success overlay -->
-  <div class="success-overlay" id="success-overlay">
-    <div class="success-box">
-      <div class="success-icon">✅</div>
-      <div class="success-title">Account Verified!</div>
-      <div class="success-sub">Your account has been created and Two-Factor Authentication is now enabled. Redirecting you to your dashboard...</div>
-      <div style="height:6px;background:#eee;border-radius:3px;overflow:hidden;">
-        <div id="redirect-bar" style="height:100%;background:var(--green);width:0%;transition:width 2s linear;border-radius:3px;"></div>
+        <a class="back-link" href="signup.html" id="back-link"
+          >← Back to sign up</a
+        >
       </div>
     </div>
-  </div>
 
-  <script src="js/data.js"></script>
-  <script>
-    // ── Load pending data ──────────────────────────────────────
-    const raw = sessionStorage.getItem("sp_pending");
-    // Could be signup OR login 2FA
-    const mode = sessionStorage.getItem("sp_verify_mode") || "signup"; // "signup" | "login"
+    <!-- Success overlay -->
+    <div class="success-overlay" id="success-overlay">
+      <div class="success-box">
+        <div class="success-icon">✅</div>
+        <div class="success-title">Account Verified!</div>
+        <div class="success-sub">
+          Your account has been created and Two-Factor Authentication is now
+          enabled. Redirecting you to your dashboard...
+        </div>
+        <div
+          style="
+            height: 6px;
+            background: #eee;
+            border-radius: 3px;
+            overflow: hidden;
+          "
+        >
+          <div
+            id="redirect-bar"
+            style="
+              height: 100%;
+              background: var(--green);
+              width: 0%;
+              transition: width 2s linear;
+              border-radius: 3px;
+            "
+          ></div>
+        </div>
+      </div>
+    </div>
 
-    if (!raw) {
-      // Nothing pending — redirect appropriately
-      location.href = mode === "login" ? "login.html" : "signup.html";
-    }
+    <script src="js/data.js"></script>
+    <script>
+      // ── Load pending data ──────────────────────────────────────
+      const raw = sessionStorage.getItem("sp_pending");
+      // Could be signup OR login 2FA
+      const mode = sessionStorage.getItem("sp_verify_mode") || "signup"; // "signup" | "login"
 
-    const pending = JSON.parse(raw);
-    let   attempts = 3;
-    let   countdown;
-    let   timerInterval;
+      if (!raw) {
+        // Nothing pending — redirect appropriately
+        location.href = mode === "login" ? "login.html" : "signup.html";
+      }
 
-    // Set up display
-    document.getElementById("email-display").textContent = pending.email || "your email";
-    if (mode === "login") {
-      document.getElementById("verify-sub").innerHTML =
-        `Two-Factor Authentication is enabled on this account.<br>
+      const pending = JSON.parse(raw);
+      let attempts = 3;
+      let countdown;
+      let timerInterval;
+
+      // Set up display
+      document.getElementById("email-display").textContent =
+        pending.email || "your email";
+      if (mode === "login") {
+        document.getElementById("verify-sub").innerHTML =
+          `Two-Factor Authentication is enabled on this account.<br>
          A 6-digit code was sent to <strong>${pending.email}</strong>.`;
-      document.getElementById("back-link").href = "login.html";
-      document.getElementById("back-link").textContent = "← Back to login";
-    }
-
-    // ── Timer ──────────────────────────────────────────────────
-    function startTimer() {
-      const remaining = Math.max(0, Math.floor((pending.expiry - Date.now()) / 1000));
-      countdown = remaining;
-      clearInterval(timerInterval);
-      updateTimerDisplay();
-      timerInterval = setInterval(() => {
-        countdown--;
-        updateTimerDisplay();
-        if (countdown <= 0) {
-          clearInterval(timerInterval);
-          document.getElementById("resend-btn").classList.add("visible");
-          document.getElementById("err-msg").textContent = "⚠️ Your code has expired. Please request a new one.";
-        }
-      }, 1000);
-    }
-
-    function updateTimerDisplay() {
-      const m = Math.floor(countdown / 60);
-      const s = countdown % 60;
-      const el = document.getElementById("timer-count");
-      el.textContent = `${m}:${String(s).padStart(2,"0")}`;
-      el.className = "timer-count" + (countdown <= 60 ? " urgent" : "");
-    }
-
-    startTimer();
-
-    // ── Auto-focus digit boxes ─────────────────────────────────
-    const inputs = Array.from(document.querySelectorAll(".code-input"));
-    inputs.forEach((inp, i) => {
-      inp.addEventListener("input", e => {
-        // Only allow digits
-        inp.value = inp.value.replace(/\D/g, "");
-        if (inp.value) {
-          inp.classList.add("filled");
-          if (i < 5) inputs[i+1].focus();
-          else verifyCode(); // auto-submit when last digit entered
-        }
-      });
-      inp.addEventListener("keydown", e => {
-        if (e.key === "Backspace" && !inp.value && i > 0) {
-          inputs[i-1].focus();
-          inputs[i-1].value = "";
-          inputs[i-1].classList.remove("filled");
-        }
-      });
-      inp.addEventListener("paste", e => {
-        e.preventDefault();
-        const text = (e.clipboardData || window.clipboardData).getData("text").replace(/\D/g,"").slice(0,6);
-        text.split("").forEach((ch, idx) => {
-          if (inputs[idx]) { inputs[idx].value = ch; inputs[idx].classList.add("filled"); }
-        });
-        if (text.length === 6) verifyCode();
-        else if (inputs[text.length]) inputs[text.length].focus();
-      });
-    });
-    inputs[0].focus();
-
-    // ── Verify ─────────────────────────────────────────────────
-    function verifyCode() {
-      const entered = inputs.map(i => i.value).join("");
-      const errEl   = document.getElementById("err-msg");
-
-      if (entered.length < 6) {
-        errEl.textContent = "Please enter all 6 digits."; return;
-      }
-      if (countdown <= 0) {
-        errEl.textContent = "⚠️ Code expired. Please request a new one."; return;
+        document.getElementById("back-link").href = "login.html";
+        document.getElementById("back-link").textContent = "← Back to login";
       }
 
-      if (entered === pending.code) {
-        // ✅ Correct
+      // ── Timer ──────────────────────────────────────────────────
+      function startTimer() {
+        const remaining = Math.max(
+          0,
+          Math.floor((pending.expiry - Date.now()) / 1000),
+        );
+        countdown = remaining;
         clearInterval(timerInterval);
-        errEl.textContent = "";
+        updateTimerDisplay();
+        timerInterval = setInterval(() => {
+          countdown--;
+          updateTimerDisplay();
+          if (countdown <= 0) {
+            clearInterval(timerInterval);
+            document.getElementById("resend-btn").classList.add("visible");
+            document.getElementById("err-msg").textContent =
+              "⚠️ Your code has expired. Please request a new one.";
+          }
+        }, 1000);
+      }
 
-        if (mode === "signup") {
-          // Save user to localStorage
-          const users = JSON.parse(localStorage.getItem("sp_users") || "[]");
-          users.push({
-            name:      pending.name,
-            email:     pending.email,
-            password:  pending.pass,
-            twofa:     true
+      function updateTimerDisplay() {
+        const m = Math.floor(countdown / 60);
+        const s = countdown % 60;
+        const el = document.getElementById("timer-count");
+        el.textContent = `${m}:${String(s).padStart(2, "0")}`;
+        el.className = "timer-count" + (countdown <= 60 ? " urgent" : "");
+      }
+
+      startTimer();
+
+      // ── Auto-focus digit boxes ─────────────────────────────────
+      const inputs = Array.from(document.querySelectorAll(".code-input"));
+      inputs.forEach((inp, i) => {
+        inp.addEventListener("input", (e) => {
+          // Only allow digits
+          inp.value = inp.value.replace(/\D/g, "");
+          if (inp.value) {
+            inp.classList.add("filled");
+            if (i < 5) inputs[i + 1].focus();
+            else verifyCode(); // auto-submit when last digit entered
+          }
+        });
+        inp.addEventListener("keydown", (e) => {
+          if (e.key === "Backspace" && !inp.value && i > 0) {
+            inputs[i - 1].focus();
+            inputs[i - 1].value = "";
+            inputs[i - 1].classList.remove("filled");
+          }
+        });
+        inp.addEventListener("paste", (e) => {
+          e.preventDefault();
+          const text = (e.clipboardData || window.clipboardData)
+            .getData("text")
+            .replace(/\D/g, "")
+            .slice(0, 6);
+          text.split("").forEach((ch, idx) => {
+            if (inputs[idx]) {
+              inputs[idx].value = ch;
+              inputs[idx].classList.add("filled");
+            }
           });
-          localStorage.setItem("sp_users", JSON.stringify(users));
-          SavePlate.setUser({ name: pending.name, email: pending.email });
-        } else {
-          // Login 2FA — just set session
-          SavePlate.setUser({ name: pending.name, email: pending.email });
+          if (text.length === 6) verifyCode();
+          else if (inputs[text.length]) inputs[text.length].focus();
+        });
+      });
+      inputs[0].focus();
+
+      // ── Verify ─────────────────────────────────────────────────
+      function verifyCode() {
+        const entered = inputs.map((i) => i.value).join("");
+        const errEl = document.getElementById("err-msg");
+
+        if (entered.length < 6) {
+          errEl.textContent = "Please enter all 6 digits.";
+          return;
+        }
+        if (countdown <= 0) {
+          errEl.textContent = "⚠️ Code expired. Please request a new one.";
+          return;
         }
 
-        sessionStorage.removeItem("sp_pending");
-        sessionStorage.removeItem("sp_verify_mode");
-
-        // Show success overlay then redirect
-        document.getElementById("success-overlay").classList.add("open");
-        if (mode === "login") {
-          document.querySelector(".success-title").textContent = "Identity Verified!";
-          document.querySelector(".success-sub").textContent   = "Two-Factor Authentication passed. Redirecting to your dashboard...";
-        }
-        setTimeout(() => {
-          document.getElementById("redirect-bar").style.width = "100%";
-        }, 50);
-        setTimeout(() => location.href = "dashboard.html", 2200);
-
-      } else {
-        // ❌ Wrong code
-        attempts--;
-        inputs.forEach(i => i.classList.add("error"));
-        setTimeout(() => inputs.forEach(i => i.classList.remove("error")), 400);
-        inputs.forEach(i => { i.value = ""; i.classList.remove("filled"); });
-        inputs[0].focus();
-
-        if (attempts > 0) {
-          errEl.textContent = `❌ Incorrect code. ${attempts} attempt${attempts !== 1 ? "s" : ""} remaining.`;
-          document.getElementById("attempts-left").textContent = "";
-        } else {
+        if (entered === pending.code) {
+          // ✅ Correct
           clearInterval(timerInterval);
-          errEl.textContent = "❌ Too many incorrect attempts. Please request a new code.";
-          inputs.forEach(i => i.disabled = true);
-          document.getElementById("resend-btn").classList.add("visible");
+          errEl.textContent = "";
+
+          if (mode === "signup") {
+            // Save user to localStorage
+            const users = JSON.parse(localStorage.getItem("sp_users") || "[]");
+            users.push({
+              name: pending.name,
+              email: pending.email,
+              password: pending.pass,
+              twofa: true,
+            });
+            localStorage.setItem("sp_users", JSON.stringify(users));
+            SavePlate.setUser({ name: pending.name, email: pending.email });
+          } else {
+            // Login 2FA — just set session
+            SavePlate.setUser({ name: pending.name, email: pending.email });
+          }
+
+          sessionStorage.removeItem("sp_pending");
+          sessionStorage.removeItem("sp_verify_mode");
+
+          // Show success overlay then redirect
+          document.getElementById("success-overlay").classList.add("open");
+          if (mode === "login") {
+            document.querySelector(".success-title").textContent =
+              "Identity Verified!";
+            document.querySelector(".success-sub").textContent =
+              "Two-Factor Authentication passed. Redirecting to your dashboard...";
+          }
+          setTimeout(() => {
+            document.getElementById("redirect-bar").style.width = "100%";
+          }, 50);
+          setTimeout(() => (location.href = "dashboard.html"), 2200);
+        } else {
+          // ❌ Wrong code
+          attempts--;
+          inputs.forEach((i) => i.classList.add("error"));
+          setTimeout(
+            () => inputs.forEach((i) => i.classList.remove("error")),
+            400,
+          );
+          inputs.forEach((i) => {
+            i.value = "";
+            i.classList.remove("filled");
+          });
+          inputs[0].focus();
+
+          if (attempts > 0) {
+            errEl.textContent = `❌ Incorrect code. ${attempts} attempt${attempts !== 1 ? "s" : ""} remaining.`;
+            document.getElementById("attempts-left").textContent = "";
+          } else {
+            clearInterval(timerInterval);
+            errEl.textContent =
+              "❌ Too many incorrect attempts. Please request a new code.";
+            inputs.forEach((i) => (i.disabled = true));
+            document.getElementById("resend-btn").classList.add("visible");
+          }
         }
       }
-    }
 
-    // ── Resend ─────────────────────────────────────────────────
-    function resendCode() {
-      const newCode   = String(Math.floor(100000 + Math.random() * 900000));
-      const newExpiry = Date.now() + 5 * 60 * 1000;
-      pending.code    = newCode;
-      pending.expiry  = newExpiry;
-      attempts        = 3;
-      sessionStorage.setItem("sp_pending", JSON.stringify(pending));
+      // ── Resend ─────────────────────────────────────────────────
+      function resendCode() {
+        const newCode = String(Math.floor(100000 + Math.random() * 900000));
+        const newExpiry = Date.now() + 5 * 60 * 1000;
+        pending.code = newCode;
+        pending.expiry = newExpiry;
+        attempts = 3;
+        sessionStorage.setItem("sp_pending", JSON.stringify(pending));
 
-      // Re-enable inputs
-      inputs.forEach(i => { i.disabled = false; i.value = ""; i.classList.remove("filled","error"); });
-      inputs[0].focus();
-      document.getElementById("err-msg").textContent = "";
-      document.getElementById("attempts-left").textContent = "";
-      document.getElementById("resend-btn").classList.remove("visible");
+        // Re-enable inputs
+        inputs.forEach((i) => {
+          i.disabled = false;
+          i.value = "";
+          i.classList.remove("filled", "error");
+        });
+        inputs[0].focus();
+        document.getElementById("err-msg").textContent = "";
+        document.getElementById("attempts-left").textContent = "";
+        document.getElementById("resend-btn").classList.remove("visible");
 
-      // Show new code in alert (simulating email re-send)
-      alert(`📬 New verification code sent!\n\n[DEMO] Your new code is: ${newCode}\n\nIn a real app this would arrive in your inbox.`);
-      startTimer();
-    }
-  </script>
-</body>
+        // Show new code in alert (simulating email re-send)
+        alert(
+          `📬 New verification code sent!\n\n[DEMO] Your new code is: ${newCode}\n\nIn a real app this would arrive in your inbox.`,
+        );
+        startTimer();
+      }
+    </script>
+  </body>
 </html>
