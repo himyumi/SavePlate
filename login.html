@@ -9,7 +9,9 @@
   <body>
     <div class="auth-page">
       <div class="auth-card">
-        <span class="auth-logo"><img src="images/Logo.png" alt="SavePlate Logo" /></span>
+        <span class="auth-logo"
+          ><img src="images/Logo.png" alt="SavePlate Logo"
+        /></span>
         <div class="auth-title">SavePlate</div>
         <div class="auth-sub">Smart food waste reduction</div>
 
@@ -49,7 +51,7 @@
     <div class="mock-email-overlay" id="email-modal">
       <div class="mock-email-box">
         <div class="email-header">
-          <div class="email-header-label">📬 Simulated Email — Demo Mode</div>
+          <div class="email-header-label">📧 Simulated Email — Demo Mode</div>
           <div class="email-subject">SavePlate Login Verification</div>
           <div class="email-meta">
             From: noreply@saveplate.app &nbsp;·&nbsp; To:
@@ -58,15 +60,14 @@
         </div>
         <div class="email-body">
           <div class="email-greeting">
-            Hi <strong id="email-name"></strong>! 👋<br /><br />
-            A login attempt was made on your SavePlate account. Enter the code
-            below to confirm it was you.
+            Hi <strong id="email-name"></strong>! <br /><br />
+            your are logging in Enter the code to access the account.
           </div>
           <div class="code-display">
             <div class="code-label">Your Login Verification Code</div>
             <div class="code-number" id="code-display">000000</div>
             <div class="code-expiry">
-              ⏱ Expires in <span id="timer-text">5:00</span>
+              Expires in <span id="timer-text">3:00</span>
             </div>
             <div class="timer-bar-wrap">
               <div class="timer-bar" id="timer-bar" style="width: 100%"></div>
@@ -77,7 +78,7 @@
             sent to your email. Shown here for prototype demonstration only.
           </div>
           <button class="btn-got-it" onclick="goToVerify()">
-            Got it — Enter Code →
+            Enter Code
           </button>
         </div>
       </div>
@@ -86,7 +87,7 @@
     <script src="js/data.js"></script>
     <script>
       let timerInterval = null;
-      let countdown = 300;
+      let countdown = 180;
 
       function doLogin() {
         const email = document.getElementById("email").value.trim();
@@ -123,7 +124,7 @@
         if (enforce2fa) {
           // Trigger 2FA challenge
           const code = String(Math.floor(100000 + Math.random() * 900000));
-          const expiry = Date.now() + 5 * 60 * 1000;
+          const expiry = Date.now() + 3 * 60 * 1000;
           sessionStorage.setItem(
             "sp_pending",
             JSON.stringify({ name, email, code, expiry }),
@@ -144,7 +145,7 @@
       }
 
       function startTimer() {
-        countdown = 300;
+        countdown = 180;
         clearInterval(timerInterval);
         timerInterval = setInterval(() => {
           countdown--;
@@ -153,7 +154,7 @@
           document.getElementById("timer-text").textContent =
             `${m}:${String(s).padStart(2, "0")}`;
           document.getElementById("timer-bar").style.width =
-            (countdown / 300) * 100 + "%";
+            (countdown / 180) * 100 + "%";
           if (countdown <= 60)
             document.getElementById("timer-bar").style.background =
               "var(--red)";

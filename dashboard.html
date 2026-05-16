@@ -85,7 +85,7 @@
       const greet =
         h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
       document.getElementById("greeting").textContent =
-        `${greet}, ${SavePlate.user.name}! 👋`;
+        `${greet}, ${SavePlate.user.name}!`;
 
       // Stats
       const inv = SavePlate.inventory.filter((i) => !i.usedUp && !i.donated);

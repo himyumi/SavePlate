@@ -215,10 +215,11 @@ const SavePlate = (() => {
       ];
       return `<div class="sidebar">
         <div class="sidebar-profile">
-          <div class="sidebar-avatar">👤</div>
+          <div class="sidebar-avatar"><img src="images/SmallLogo.png" alt="SavePlate Logo" /></div>
           <div>
-            <div class="sidebar-name">${u.name || "User"}</div>
-            <div class="sidebar-email">${u.email || ""}</div>
+            <div class="sidebar-name">
+            SAVEPLATE
+            </div>
           </div>
         </div>
         <nav class="sidebar-nav">
