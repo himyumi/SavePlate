@@ -5,69 +5,6 @@
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
     <title>SavePlate – Inventory</title>
     <link rel="stylesheet" href="css/style.css" />
-    <style>
-      .inv-actions {
-        display: flex;
-        gap: 6px;
-        margin-top: 12px;
-        flex-wrap: wrap;
-      }
-      .inv-action-btn {
-        flex: 1;
-        min-width: 80px;
-        border: none;
-        border-radius: 7px;
-        padding: 7px 6px;
-        font-family: "DM Sans", sans-serif;
-        font-size: 11px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: 0.2s;
-      }
-      .btn-used {
-        background: rgba(76, 175, 80, 0.2);
-        color: #66bb6a;
-      }
-      .btn-used:hover {
-        background: rgba(76, 175, 80, 0.35);
-      }
-      .btn-donate {
-        background: rgba(245, 166, 35, 0.2);
-        color: #f5a623;
-      }
-      .btn-donate:hover {
-        background: rgba(245, 166, 35, 0.35);
-      }
-      .btn-del {
-        background: rgba(229, 57, 53, 0.2);
-        color: var(--red);
-      }
-      .btn-del:hover {
-        background: rgba(229, 57, 53, 0.35);
-      }
-      .inv-card.used-card {
-        opacity: 0.55;
-      }
-      .inv-card.donated-card {
-        opacity: 0.55;
-        border: 2px solid #f5a623;
-      }
-      .status-tag {
-        font-size: 10px;
-        font-weight: 700;
-        padding: 2px 7px;
-        border-radius: 20px;
-        margin-left: 6px;
-      }
-      .status-tag.used {
-        background: rgba(76, 175, 80, 0.25);
-        color: #66bb6a;
-      }
-      .status-tag.donated {
-        background: rgba(245, 166, 35, 0.25);
-        color: #f5a623;
-      }
-    </style>
   </head>
   <body>
     <div id="sidebar-root"></div>

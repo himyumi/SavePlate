@@ -70,14 +70,6 @@
               ></div>
             </div>
             <div class="settings-row">
-              <span class="settings-row-lbl">📧 Email Alerts</span>
-              <div
-                class="toggle"
-                id="t-emailAlerts"
-                onclick="toggleSetting('emailAlerts', this)"
-              ></div>
-            </div>
-            <div class="settings-row">
               <span class="settings-row-lbl">🔔 Push Notifications</span>
               <div
                 class="toggle"
@@ -127,20 +119,6 @@
         </div>
 
         <div class="settings-section">
-          <div class="settings-section-label">Preferences</div>
-          <div class="settings-card">
-            <div class="settings-row">
-              <span class="settings-row-lbl">🌙 Dark Mode</span>
-              <div
-                class="toggle"
-                id="t-darkMode"
-                onclick="toggleSetting('darkMode', this)"
-              ></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="settings-section">
           <div class="settings-section-label">Data</div>
           <div class="settings-card danger-zone">
             <div
@@ -180,7 +158,7 @@
 
       // Load settings
       const s = SavePlate.settings;
-      ["twofa", "emailAlerts", "notifs", "darkMode"].forEach((key) => {
+      ["twofa", "notifs", "darkMode"].forEach((key) => {
         const el = document.getElementById("t-" + key);
         if (el && s[key]) el.classList.add("on");
       });
