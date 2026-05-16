@@ -496,11 +496,11 @@
         { num: totalSaved.toFixed(1)   + "kg", label: "Total Food Saved",    color: "var(--green)" },
         { num: totalDonated.toFixed(1) + "kg", label: "Total Donated",       color: "var(--amber)" },
         { num: totalWasted.toFixed(1)  + "kg", label: "Estimated Wasted",    color: "var(--red)"   },
-        { num: donations.length,               label: "Donations Listed",    color: "var(--navy)"  },
-        { num: activeInv.length,               label: "Items in Inventory",  color: "#5c7cfa"      },
+        { num: donations.length,               label: "Donations Listed",    color: "var(--White)"  },
+        { num: activeInv.length,               label: "Items in Inventory",  color: "var(--White)"      },
         { num: expiringCount,                  label: "Expiring Soon",       color: "var(--red)"   },
-        { num: claimedCount,                   label: "Donations Claimed",   color: "var(--green)" },
-        { num: wasteScore + "%",               label: "Waste Save Rate",     color: "var(--amber)" },
+        { num: claimedCount,                   label: "Donations Claimed",   color: "var(--white)" },
+        { num: wasteScore + "%",               label: "Waste Save Rate",     color: "var(--green)" },
       ].map(t => `
         <div class="impact-tile">
           <div class="impact-num" style="color:${t.color}">${t.num}</div>
