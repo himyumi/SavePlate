@@ -216,11 +216,6 @@ const SavePlate = (() => {
       return `<div class="sidebar">
         <div class="sidebar-profile">
           <div class="sidebar-avatar"><img src="images/SmallLogo.png" alt="SavePlate Logo" /></div>
-          <div>
-            <div class="sidebar-name">
-            SAVEPLATE
-            </div>
-          </div>
         </div>
         <nav class="sidebar-nav">
           ${links.map(l => `<a href="${l.href}" class="nav-link ${active===l.id?"active":""}">${l.label}</a>`).join("")}

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-    <title>SavePlate – Inventory</title>
+    <title>SavePlate - Inventory</title>
     <link rel="stylesheet" href="css/style.css" />
   </head>
   <body>
@@ -117,6 +117,65 @@
       </div>
     </div>
 
+    <!-- EDIT MODAL -->
+    <div class="modal-overlay" id="edit-modal">
+      <div class="modal-box">
+        <div class="modal-title">Edit Food Item</div>
+        <div class="form-group">
+          <label>Item Name *</label>
+          <input type="text" id="e-name" placeholder="e.g. Fresh Milk" />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Quantity *</label>
+            <input type="text" id="e-qty" placeholder="e.g. 1 Liter" />
+          </div>
+          <div class="form-group">
+            <label>Category *</label>
+            <select id="e-cat">
+              <option>Dairy</option>
+              <option>Fruits</option>
+              <option>Meat</option>
+              <option>Vegetables</option>
+              <option>Grains</option>
+              <option>Canned</option>
+              <option>Frozen</option>
+              <option>Bakery</option>
+              <option>Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Expiry Date *</label>
+            <input type="date" id="e-exp" />
+          </div>
+          <div class="form-group">
+            <label>Storage Location</label>
+            <select id="e-loc">
+              <option>Fridge</option>
+              <option>Pantry</option>
+              <option>Freezer</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Notes (optional)</label>
+          <input type="text" id="e-notes" placeholder="Any remarks..." />
+        </div>
+        <div class="modal-actions">
+          <button class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+          <button
+            class="btn-navy"
+            style="width: auto; padding: 10px 22px"
+            onclick="saveEdit()"
+          >
+            Save Changes
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- CONVERT TO DONATION CONFIRM MODAL -->
     <div class="modal-overlay" id="donate-modal">
       <div class="modal-box" style="width: 360px">
@@ -155,6 +214,7 @@
         catFilter = "",
         statusFilter = "";
       let pendingDonateId = null;
+      let editingId = null;
 
       function getView() {
         return SavePlate.inventory.filter((i) => {
@@ -199,8 +259,9 @@
           ${
             !item.usedUp && !item.donated
               ? `<div class="inv-actions">
-            <button class="inv-action-btn btn-used"    onclick="markUsed(${item.id})">✅ Mark Used</button>
-            <button class="inv-action-btn btn-donate"  onclick="openDonateModal(${item.id},'${item.name}')">🤝 Donate</button>
+            <button class="inv-action-btn btn-used"   onclick="markUsed(${item.id})">✅ Mark Used</button>
+            <button class="inv-action-btn btn-donate" onclick="openDonateModal(${item.id},'${item.name.replace(/'/g, "\\'")}')">🤝 Donate</button>
+            <button class="inv-action-btn btn-edit"   onclick="openEditModal(${item.id})">Edit</button>
           </div>`
               : ""
           }
@@ -231,6 +292,8 @@
         SavePlate.markItemUsed(id);
         renderGrid();
       }
+
+      // ── Donate ──────────────────────────────────────────────────
       function openDonateModal(id, name) {
         pendingDonateId = id;
         document.getElementById("donate-msg").textContent =
@@ -246,6 +309,7 @@
         renderGrid();
       }
 
+      // ── Add ──────────────────────────────────────────────────────
       function openModal() {
         document.getElementById("modal").classList.add("open");
       }
@@ -281,9 +345,62 @@
         );
       }
 
-      // Close modal on backdrop click
+      // ── Edit ──────────────────────────────────────────────────────
+      function openEditModal(id) {
+        const inv = SavePlate.inventory;
+        const item = inv.find((i) => i.id === id);
+        if (!item) return;
+        editingId = id;
+        document.getElementById("e-name").value = item.name;
+        document.getElementById("e-qty").value = item.qty;
+        document.getElementById("e-cat").value = item.cat;
+        document.getElementById("e-exp").value = item.exp;
+        document.getElementById("e-loc").value = item.loc;
+        document.getElementById("e-notes").value = item.notes || "";
+        document.getElementById("edit-modal").classList.add("open");
+      }
+      function closeEditModal() {
+        document.getElementById("edit-modal").classList.remove("open");
+        editingId = null;
+      }
+      function saveEdit() {
+        const name = document.getElementById("e-name").value.trim();
+        const qty = document.getElementById("e-qty").value.trim();
+        const cat = document.getElementById("e-cat").value;
+        const exp = document.getElementById("e-exp").value;
+        const loc = document.getElementById("e-loc").value;
+        const notes = document.getElementById("e-notes").value.trim();
+        if (!name || !qty || !exp) {
+          alert("Please fill required fields (*).");
+          return;
+        }
+        if (new Date(exp) < new Date()) {
+          alert("Expiry date cannot be in the past.");
+          return;
+        }
+        const inv = SavePlate.inventory;
+        const item = inv.find((i) => i.id === editingId);
+        if (!item) return;
+        const diff = (new Date(exp) - new Date()) / 86400000;
+        item.name = name;
+        item.qty = qty;
+        item.cat = cat;
+        item.exp = exp;
+        item.loc = loc;
+        item.notes = notes;
+        item.emoji = SavePlate.catEmoji[cat] || "🍽";
+        item.status = diff <= 2 ? "danger" : diff <= 5 ? "warn" : "ok";
+        SavePlate.inventory = inv;
+        closeEditModal();
+        renderGrid();
+      }
+
+      // Close modals on backdrop click
       document.getElementById("modal").addEventListener("click", (e) => {
         if (e.target.id === "modal") closeModal();
+      });
+      document.getElementById("edit-modal").addEventListener("click", (e) => {
+        if (e.target.id === "edit-modal") closeEditModal();
       });
       document.getElementById("donate-modal").addEventListener("click", (e) => {
         if (e.target.id === "donate-modal") closeDonateModal();
