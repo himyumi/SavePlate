@@ -146,8 +146,13 @@
       </div>
     </div>
 
+    <script src="https://www.gstatic.com/firebasejs/10.7.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.2/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
     <script src="js/data.js"></script>
     <script>
+      SavePlate.ready.then(function () {
       SavePlate.guardAuth();
       document.getElementById("sidebar-root").innerHTML =
         SavePlate.renderSidebar("settings");
@@ -156,32 +161,34 @@
       document.getElementById("pname").textContent = SavePlate.user.name;
       document.getElementById("pemail").textContent = SavePlate.user.email;
 
-      // Load settings
       const s = SavePlate.settings;
       ["twofa", "notifs", "darkMode"].forEach((key) => {
         const el = document.getElementById("t-" + key);
         if (el && s[key]) el.classList.add("on");
       });
 
-      function toggleSetting(key, el) {
+      window.toggleSetting = function (key, el) {
         el.classList.toggle("on");
         const s = SavePlate.settings;
         s[key] = el.classList.contains("on");
         SavePlate.settings = s;
-      }
+        if (key === "twofa") {
+          SavePlate.saveProfile(SavePlate.user.name, s.twofa);
+        }
+      };
 
-      function changePassword() {
+      window.changePassword = async function () {
         const curr = document.getElementById("pw-current").value.trim();
         const newPw = document.getElementById("pw-new").value.trim();
-        const confirm = document.getElementById("pw-confirm").value.trim();
+        const confirmPw = document.getElementById("pw-confirm").value.trim();
         const msgEl = document.getElementById("pw-msg");
-        if (!curr || !newPw || !confirm) {
+        if (!curr || !newPw || !confirmPw) {
           msgEl.style.color = "var(--red)";
           msgEl.textContent = "Please fill all fields.";
           msgEl.style.display = "block";
           return;
         }
-        if (newPw !== confirm) {
+        if (newPw !== confirmPw) {
           msgEl.style.color = "var(--red)";
           msgEl.textContent = "Passwords do not match.";
           msgEl.style.display = "block";
@@ -193,45 +200,41 @@
           msgEl.style.display = "block";
           return;
         }
-        // Update stored password
-        const users = JSON.parse(localStorage.getItem("sp_users") || "[]");
-        const idx = users.findIndex((u) => u.email === SavePlate.user.email);
-        if (idx !== -1) {
-          users[idx].password = newPw;
-          localStorage.setItem("sp_users", JSON.stringify(users));
+        try {
+          const user = firebase.auth().currentUser;
+          const credential = firebase.auth.EmailAuthProvider.credential(user.email, curr);
+          await user.reauthenticateWithCredential(credential);
+          await user.updatePassword(newPw);
+          msgEl.style.color = "var(--green)";
+          msgEl.textContent = "✅ Password updated successfully!";
+          msgEl.style.display = "block";
+          ["pw-current", "pw-new", "pw-confirm"].forEach(
+            (id) => (document.getElementById(id).value = ""),
+          );
+        } catch (e) {
+          msgEl.style.color = "var(--red)";
+          if (e.code === "auth/wrong-password" || e.code === "auth/invalid-credential") {
+            msgEl.textContent = "❌ Current password is incorrect.";
+          } else {
+            msgEl.textContent = "❌ " + (e.message || "Failed to update password.");
+          }
+          msgEl.style.display = "block";
         }
-        msgEl.style.color = "var(--green)";
-        msgEl.textContent = "✅ Password updated successfully!";
-        msgEl.style.display = "block";
-        ["pw-current", "pw-new", "pw-confirm"].forEach(
-          (id) => (document.getElementById(id).value = ""),
-        );
-      }
+      };
 
-      function clearData() {
-        if (
-          !confirm(
-            "This will clear all your inventory, meals, and donation data. Are you sure?",
-          )
-        )
-          return;
-        [
-          "sp_inventory",
-          "sp_donations",
-          "sp_meals",
-          "sp_notifs",
-          "sp_analytics",
-          "sp_nextId",
-          "sp_settings",
-        ].forEach((k) => localStorage.removeItem(k));
+      window.clearData = async function () {
+        if (!confirm("This will clear all your inventory, meals, and donation data. Are you sure?")) return;
+        await SavePlate.clearUserData();
         alert("Data cleared. The app will reload with fresh data.");
         location.reload();
-      }
+      };
 
-      function logout() {
-        SavePlate.clearUser();
-        location.href = "index.html";
-      }
+      window.logout = function () {
+        SavePlate.clearUser().then(() => {
+          location.href = "index.html";
+        });
+      };
+      }); // end SavePlate.ready.then
     </script>
   </body>
 </html>

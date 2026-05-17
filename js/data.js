@@ -1,16 +1,29 @@
 /* ================================================================
-   SavePlate – data.js  (localStorage-backed data layer)
+   SavePlate – data.js  (Firebase Auth + Firestore backend)
+   ================================================================
+   Loads user data from Firestore into an in-memory cache on page load.
+   All synchronous SavePlate.* getters read from cache.
+   Writes go to both the cache and Firestore.
+   Pages must wait for SavePlate.ready before accessing data.
    ================================================================ */
 
 const SavePlate = (() => {
-  /* ── helpers ────────────────────────────────────────────────── */
-  function load(key, fallback) {
-    try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
-    catch { return fallback; }
-  }
-  function save(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
+  const auth = firebase.auth();
+  const db   = firebase.firestore();
 
-  /* ── seed data (only written on first visit) ─────────────────── */
+  let _uid     = null;
+  let _profile = { name: "", twofa: false };
+
+  const _cache = {
+    inventory: [],
+    donations: [],
+    meals: {},
+    notifications: [],
+    analytics: [],
+    settings: { twofa: true, emailAlerts: true, notifs: true, darkMode: false },
+  };
+
+  /* ── seed data (only written on first-ever login for a user) ──── */
   const SEED_INVENTORY = [
     { id: 1, name: "Fresh Milk", emoji: "🥛", cat: "Dairy",  qty: "1 Liter",   loc: "Fridge",  exp: futureDate(1),  status: "danger", usedUp: false, donated: false },
     { id: 2, name: "Greek Yogurt", emoji: "🥛", cat: "Dairy",  qty: "500g",      loc: "Fridge",  exp: futureDate(3),  status: "warn",   usedUp: false, donated: false },
@@ -61,103 +74,224 @@ const SavePlate = (() => {
     { m: "Apr", saved: 7.2, wasted: 0.8, donated: 3.1 },
   ];
 
-  /* initialise DB on first run */
-  if (!localStorage.getItem("sp_inventory"))  save("sp_inventory",  SEED_INVENTORY);
-  if (!localStorage.getItem("sp_donations"))  save("sp_donations",  SEED_DONATIONS);
-  if (!localStorage.getItem("sp_meals"))      save("sp_meals",      SEED_MEALS);
-  if (!localStorage.getItem("sp_notifs"))     save("sp_notifs",     SEED_NOTIFICATIONS);
-  if (!localStorage.getItem("sp_analytics"))  save("sp_analytics",  SEED_ANALYTICS);
-  if (!localStorage.getItem("sp_nextId"))     save("sp_nextId",     200);
-  if (!localStorage.getItem("sp_settings"))   save("sp_settings",   { twofa:true, emailAlerts:true, notifs:true, darkMode:false });
-
   /* ── utility ──────────────────────────────────────────────────── */
   function futureDate(days) {
     const d = new Date(); d.setDate(d.getDate() + days);
     return d.toISOString().split("T")[0];
   }
-  function nextId() { const n = load("sp_nextId", 200) + 1; save("sp_nextId", n); return n; }
+  function nextId() {
+    return Date.now() * 1000 + Math.floor(Math.random() * 1000);
+  }
+
+  /* ── load user data from Firestore into _cache ──────────────── */
+  async function loadUserData(user) {
+    _uid = user.uid;
+    const userRef = db.collection("users").doc(_uid);
+
+    const profileSnap = await userRef.get();
+    if (!profileSnap.exists) {
+      _profile = { name: user.email.split("@")[0], twofa: false };
+      await userRef.set(_profile);
+    } else {
+      _profile = profileSnap.data();
+    }
+
+    const [invSnap, notifSnap, analySnap, mealsSnap, settingsSnap, donSnap] = await Promise.all([
+      userRef.collection("inventory").get(),
+      userRef.collection("notifications").get(),
+      userRef.collection("analytics").get(),
+      userRef.collection("data").doc("meals").get(),
+      userRef.collection("data").doc("settings").get(),
+      db.collection("donations").get(),
+    ]);
+
+    if (invSnap.empty) {
+      await seedSubcollection(userRef.collection("inventory"), SEED_INVENTORY);
+      _cache.inventory = [...SEED_INVENTORY];
+    } else {
+      _cache.inventory = invSnap.docs.map(d => d.data());
+    }
+
+    if (notifSnap.empty) {
+      await seedSubcollection(userRef.collection("notifications"), SEED_NOTIFICATIONS);
+      _cache.notifications = [...SEED_NOTIFICATIONS];
+    } else {
+      _cache.notifications = notifSnap.docs.map(d => d.data());
+    }
+
+    if (analySnap.empty) {
+      await Promise.all(SEED_ANALYTICS.map(a => userRef.collection("analytics").doc(a.m).set(a)));
+      _cache.analytics = [...SEED_ANALYTICS];
+    } else {
+      _cache.analytics = analySnap.docs.map(d => d.data());
+    }
+
+    if (!mealsSnap.exists) {
+      await userRef.collection("data").doc("meals").set({ data: SEED_MEALS });
+      _cache.meals = { ...SEED_MEALS };
+    } else {
+      _cache.meals = mealsSnap.data().data || {};
+    }
+
+    if (!settingsSnap.exists) {
+      await userRef.collection("data").doc("settings").set(_cache.settings);
+    } else {
+      _cache.settings = settingsSnap.data();
+    }
+
+    if (donSnap.empty) {
+      await seedDonations();
+    } else {
+      _cache.donations = donSnap.docs.map(d => d.data());
+    }
+  }
+
+  async function seedSubcollection(ref, seedArr) {
+    await Promise.all(seedArr.map(item => ref.doc(String(item.id)).set(item)));
+  }
+
+  async function seedDonations() {
+    await Promise.all(SEED_DONATIONS.map(d => db.collection("donations").doc(String(d.id)).set(d)));
+    _cache.donations = [...SEED_DONATIONS];
+  }
+
+  function clearCache() {
+    _uid = null;
+    _profile = { name: "", twofa: false };
+    _cache.inventory = [];
+    _cache.donations = [];
+    _cache.meals = {};
+    _cache.notifications = [];
+    _cache.analytics = [];
+    _cache.settings = { twofa: true, emailAlerts: true, notifs: true, darkMode: false };
+  }
+
+  /* ── ready promise — resolves after auth state + initial load ── */
+  const ready = new Promise((resolve) => {
+    auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        try { await loadUserData(user); }
+        catch (e) { console.error("Failed to load user data:", e); }
+      } else {
+        clearCache();
+      }
+      resolve();
+    });
+  });
 
   /* ── public API ────────────────────────────────────────────────── */
   return {
-    /* live getters (always fresh from localStorage) */
-    get inventory()     { return load("sp_inventory",  []); },
-    set inventory(v)    { save("sp_inventory", v); },
-    get donations()     { return load("sp_donations",  []); },
-    set donations(v)    { save("sp_donations", v); },
-    get meals()         { return load("sp_meals",      {}); },
-    set meals(v)        { save("sp_meals", v); },
-    get notifications() { return load("sp_notifs",     []); },
-    set notifications(v){ save("sp_notifs", v); },
-    get analytics()     { return load("sp_analytics",  []); },
-    set analytics(v)    { save("sp_analytics", v); },
-    get settings()      { return load("sp_settings",   {}); },
-    set settings(v)     { save("sp_settings", v); },
+    ready,
 
-    /* user session (sessionStorage — logs out on tab close) */
-    get user() { try { return JSON.parse(sessionStorage.getItem("sp_user")); } catch { return null; } },
-    setUser(u) { sessionStorage.setItem("sp_user", JSON.stringify(u)); },
-    clearUser(){ sessionStorage.removeItem("sp_user"); },
+    get inventory()      { return _cache.inventory; },
+    set inventory(v)     { _cache.inventory = v; },
+    get donations()      { return _cache.donations; },
+    set donations(v)     { _cache.donations = v; },
+    get meals()          { return _cache.meals; },
+    set meals(v)         {
+      _cache.meals = v;
+      if (_uid) db.collection("users").doc(_uid).collection("data").doc("meals").set({ data: v });
+    },
+    get notifications()  { return _cache.notifications; },
+    set notifications(v) { _cache.notifications = v; },
+    get analytics()      { return _cache.analytics; },
+    set analytics(v)     { _cache.analytics = v; },
+    get settings()       { return _cache.settings; },
+    set settings(v)      {
+      _cache.settings = v;
+      if (_uid) db.collection("users").doc(_uid).collection("data").doc("settings").set(v);
+    },
 
-    guardAuth() { if (!this.user) window.location.href = "index.html"; },
+    get user() {
+      const u = auth.currentUser;
+      if (!u) return null;
+      return { name: _profile.name || u.email.split("@")[0], email: u.email, twofa: !!_profile.twofa };
+    },
+
+    setUser(_u) { /* no-op — Firebase manages session */ },
+    clearUser() { return auth.signOut(); },
+
+    guardAuth() { if (!auth.currentUser) window.location.href = "index.html"; },
+
+    async saveProfile(name, twofa) {
+      _profile = { name, twofa: !!twofa };
+      if (_uid) await db.collection("users").doc(_uid).set(_profile);
+    },
+
+    async clearUserData() {
+      if (!_uid) return;
+      const userRef = db.collection("users").doc(_uid);
+      const subs = ["inventory", "notifications", "analytics"];
+      for (const sub of subs) {
+        const snap = await userRef.collection(sub).get();
+        await Promise.all(snap.docs.map(d => d.ref.delete()));
+      }
+      await userRef.collection("data").doc("meals").delete().catch(() => {});
+      await userRef.collection("data").doc("settings").delete().catch(() => {});
+      clearCache();
+    },
 
     /* ── Inventory CRUD ──────────────────────────────────────── */
     addInventoryItem(item) {
-      const inv = this.inventory;
       const diff = (new Date(item.exp) - new Date()) / 86400000;
       item.status = diff <= 2 ? "danger" : diff <= 5 ? "warn" : "ok";
       item.id = nextId();
       item.usedUp  = false;
       item.donated = false;
-      inv.unshift(item);
-      this.inventory = inv;
+      _cache.inventory.unshift(item);
+      if (_uid) db.collection("users").doc(_uid).collection("inventory").doc(String(item.id)).set(item);
       this._addNotif("📦", "Item Added", `${item.name} added to your inventory.`, "");
       this._updateAnalytics("saved", 0.1);
     },
     removeInventoryItem(id) {
-      this.inventory = this.inventory.filter(i => i.id !== id);
+      _cache.inventory = _cache.inventory.filter(i => i.id !== id);
+      if (_uid) db.collection("users").doc(_uid).collection("inventory").doc(String(id)).delete();
     },
     markItemUsed(id) {
-      const inv = this.inventory;
-      const item = inv.find(i => i.id === id);
+      const item = _cache.inventory.find(i => i.id === id);
       if (item) {
         item.usedUp = true;
-        this.inventory = inv;
+        if (_uid) db.collection("users").doc(_uid).collection("inventory").doc(String(id)).set(item);
         this._addNotif("✅", "Item Marked Used", `${item.name} marked as used. Great job reducing waste!`, "success");
         this._updateAnalytics("saved", 0.3);
       }
     },
     convertToDonation(id) {
-      const inv = this.inventory;
-      const item = inv.find(i => i.id === id);
+      const item = _cache.inventory.find(i => i.id === id);
       if (!item) return;
       item.donated = true;
-      this.inventory = inv;
-      const donations = this.donations;
+      if (_uid) db.collection("users").doc(_uid).collection("inventory").doc(String(id)).set(item);
       const u = this.user || {};
-      donations.unshift({
+      const donation = {
         id: nextId(), emoji: item.emoji, name: item.name, qty: item.qty,
         loc: "My Location", exp: new Date(item.exp).toLocaleDateString("en-US",{month:"short", day:"numeric"}),
         donor: u.name || "You", claimed: false, fromInventory: true
-      });
-      this.donations = donations;
+      };
+      _cache.donations.unshift(donation);
+      db.collection("donations").doc(String(donation.id)).set(donation);
       this._addNotif("🤝", "Item Listed for Donation", `${item.name} is now listed as a donation.`, "success");
     },
     updateInventoryStatus() {
-      const inv = this.inventory.map(i => {
+      const changed = [];
+      _cache.inventory.forEach(i => {
         const diff = (new Date(i.exp) - new Date()) / 86400000;
-        i.status = diff <= 0 ? "danger" : diff <= 2 ? "danger" : diff <= 5 ? "warn" : "ok";
-        return i;
+        const newStatus = diff <= 0 ? "danger" : diff <= 2 ? "danger" : diff <= 5 ? "warn" : "ok";
+        if (i.status !== newStatus) {
+          i.status = newStatus;
+          changed.push(i);
+        }
       });
-      this.inventory = inv;
+      if (_uid && changed.length) {
+        changed.forEach(i => db.collection("users").doc(_uid).collection("inventory").doc(String(i.id)).set(i));
+      }
     },
 
     /* ── Donations ──────────────────────────────────────────────── */
     claimDonation(id) {
-      const donations = this.donations;
-      const d = donations.find(x => x.id === id);
+      const d = _cache.donations.find(x => x.id === id);
       if (d && !d.claimed) {
         d.claimed = true;
-        this.donations = donations;
+        db.collection("donations").doc(String(id)).set(d);
         this._addNotif("✅", "Donation Claimed", `You claimed "${d.name}". Contact ${d.donor} to arrange pickup.`, "success");
         return true;
       }
@@ -166,45 +300,53 @@ const SavePlate = (() => {
 
     /* ── Meals ──────────────────────────────────────────────────── */
     addMeal(dateKey, mealObj) {
-      const meals = this.meals;
-      if (!meals[dateKey]) meals[dateKey] = [];
-      meals[dateKey].push(mealObj);
-      this.meals = meals;
+      if (!_cache.meals[dateKey]) _cache.meals[dateKey] = [];
+      _cache.meals[dateKey].push(mealObj);
+      this.meals = _cache.meals;
     },
     removeMeal(dateKey, idx) {
-      const meals = this.meals;
-      if (meals[dateKey]) { meals[dateKey].splice(idx, 1); this.meals = meals; }
+      if (_cache.meals[dateKey]) {
+        _cache.meals[dateKey].splice(idx, 1);
+        this.meals = _cache.meals;
+      }
     },
 
     /* ── Notifications ──────────────────────────────────────────── */
     _addNotif(icon, title, body, type) {
-      const notifs = this.notifications;
-      notifs.unshift({ id: nextId(), icon, title, body, type, time: "Just now", read: false });
-      this.notifications = notifs;
+      const notif = { id: nextId(), icon, title, body, type, time: "Just now", read: false };
+      _cache.notifications.unshift(notif);
+      if (_uid) db.collection("users").doc(_uid).collection("notifications").doc(String(notif.id)).set(notif);
     },
     markNotifRead(id) {
-      const n = this.notifications.map(x => x.id === id ? {...x, read:true} : x);
-      this.notifications = n;
+      const n = _cache.notifications.find(x => x.id === id);
+      if (n) {
+        n.read = true;
+        if (_uid) db.collection("users").doc(_uid).collection("notifications").doc(String(id)).set(n);
+      }
     },
     markAllRead() {
-      this.notifications = this.notifications.map(x => ({...x, read:true}));
+      _cache.notifications.forEach(n => {
+        n.read = true;
+        if (_uid) db.collection("users").doc(_uid).collection("notifications").doc(String(n.id)).set(n);
+      });
     },
-    get unreadCount() { return this.notifications.filter(n => !n.read).length; },
+    get unreadCount() { return _cache.notifications.filter(n => !n.read).length; },
 
     /* ── Analytics ──────────────────────────────────────────────── */
     _updateAnalytics(field, amount) {
-      const a = this.analytics;
       const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
       const cur = months[new Date().getMonth()];
-      const row = a.find(r => r.m === cur);
-      if (row) row[field] = +((row[field]||0) + amount).toFixed(2);
-      this.analytics = a;
+      let row = _cache.analytics.find(r => r.m === cur);
+      if (!row) {
+        row = { m: cur, saved: 0, wasted: 0, donated: 0 };
+        _cache.analytics.push(row);
+      }
+      row[field] = +((row[field] || 0) + amount).toFixed(2);
+      if (_uid) db.collection("users").doc(_uid).collection("analytics").doc(cur).set(row);
     },
 
     /* ── Render helpers ─────────────────────────────────────────── */
     renderSidebar(active) {
-      const u = this.user || {};
-      const unread = this.unreadCount;
       const links = [
         { id: "dashboard",  label: "Dashboard",        href: "dashboard.html" },
         { id: "meals",      label: "Meal Planning",     href: "meals.html" },

@@ -123,6 +123,10 @@
       </div>
     </div>
 
+    <script src="https://www.gstatic.com/firebasejs/10.7.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.2/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
     <script src="js/data.js"></script>
     <script>
       // ── Load pending data ──────────────────────────────────────
@@ -220,7 +224,7 @@
       inputs[0].focus();
 
       // ── Verify ─────────────────────────────────────────────────
-      function verifyCode() {
+      async function verifyCode() {
         const entered = inputs.map((i) => i.value).join("");
         const errEl = document.getElementById("err-msg");
 
@@ -234,30 +238,30 @@
         }
 
         if (entered === pending.code) {
-          // ✅ Correct
           clearInterval(timerInterval);
           errEl.textContent = "";
 
           if (mode === "signup") {
-            // Save user to localStorage
-            const users = JSON.parse(localStorage.getItem("sp_users") || "[]");
-            users.push({
-              name: pending.name,
-              email: pending.email,
-              password: pending.pass,
-              twofa: true,
-            });
-            localStorage.setItem("sp_users", JSON.stringify(users));
-            SavePlate.setUser({ name: pending.name, email: pending.email });
-          } else {
-            // Login 2FA — just set session
-            SavePlate.setUser({ name: pending.name, email: pending.email });
+            try {
+              const cred = await firebase.auth().createUserWithEmailAndPassword(pending.email, pending.pass);
+              await firebase.firestore().collection("users").doc(cred.user.uid).set({
+                name: pending.name,
+                twofa: pending.use2fa !== false,
+              });
+            } catch (e) {
+              let msg = "❌ Account creation failed.";
+              if (e.code === "auth/email-already-in-use") msg = "This email is already registered.";
+              else if (e.code === "auth/invalid-email") msg = "Invalid email address.";
+              else if (e.code === "auth/weak-password") msg = "Password is too weak.";
+              else msg = "❌ " + (e.message || msg);
+              errEl.textContent = msg;
+              return;
+            }
           }
 
           sessionStorage.removeItem("sp_pending");
           sessionStorage.removeItem("sp_verify_mode");
 
-          // Show success overlay then redirect
           document.getElementById("success-overlay").classList.add("open");
           if (mode === "login") {
             document.querySelector(".success-title").textContent =
