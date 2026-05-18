@@ -84,12 +84,16 @@
       </div>
     </div>
 
+    <script src="https://www.gstatic.com/firebasejs/10.7.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.2/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
     <script src="js/data.js"></script>
     <script>
       let timerInterval = null;
       let countdown = 180;
 
-      function doLogin() {
+      async function doLogin() {
         const email = document.getElementById("email").value.trim();
         const pass = document.getElementById("pass").value.trim();
         const errEl = document.getElementById("err");
@@ -101,46 +105,43 @@
         }
         errEl.style.display = "none";
 
-        const users = JSON.parse(localStorage.getItem("sp_users") || "[]");
-        const match = users.find(
-          (u) => u.email === email && u.password === pass,
-        );
+        try {
+          const cred = await firebase.auth().signInWithEmailAndPassword(email, pass);
+          const profileSnap = await firebase.firestore().collection("users").doc(cred.user.uid).get();
+          const profile = profileSnap.exists ? profileSnap.data() : { name: email.split("@")[0], twofa: false };
+          const name = profile.name || email.split("@")[0];
+          const has2fa = !!profile.twofa;
 
-        if (users.length > 0 && !match) {
-          errEl.textContent = "❌ Invalid email or password.";
+          if (has2fa) {
+            const code = String(Math.floor(100000 + Math.random() * 900000));
+            const expiry = Date.now() + 3 * 60 * 1000;
+            sessionStorage.setItem(
+              "sp_pending",
+              JSON.stringify({ name, email, code, expiry }),
+            );
+            sessionStorage.setItem("sp_verify_mode", "login");
+
+            document.getElementById("email-to").textContent = email;
+            document.getElementById("email-name").textContent = name.split(" ")[0];
+            document.getElementById("code-display").textContent = code;
+            document.getElementById("email-modal").classList.add("open");
+            startTimer();
+          } else {
+            location.href = "dashboard.html";
+          }
+        } catch (e) {
+          let msg = "❌ Login failed.";
+          if (e.code === "auth/user-not-found" || e.code === "auth/wrong-password" || e.code === "auth/invalid-credential") {
+            msg = "❌ Invalid email or password.";
+          } else if (e.code === "auth/invalid-email") {
+            msg = "❌ Invalid email address.";
+          } else if (e.code === "auth/too-many-requests") {
+            msg = "❌ Too many attempts. Try again later.";
+          } else {
+            msg = "❌ " + (e.message || "Login failed.");
+          }
+          errEl.textContent = msg;
           errEl.style.display = "block";
-          return;
-        }
-
-        const name = match ? match.name : email.split("@")[0];
-        const has2fa = match ? match.twofa : false;
-
-        // Check settings override (if 2FA was enabled later in settings)
-        const settings = JSON.parse(
-          localStorage.getItem("sp_settings") || "{}",
-        );
-        const enforce2fa = has2fa || settings.twofa;
-
-        if (enforce2fa) {
-          // Trigger 2FA challenge
-          const code = String(Math.floor(100000 + Math.random() * 900000));
-          const expiry = Date.now() + 3 * 60 * 1000;
-          sessionStorage.setItem(
-            "sp_pending",
-            JSON.stringify({ name, email, code, expiry }),
-          );
-          sessionStorage.setItem("sp_verify_mode", "login");
-
-          document.getElementById("email-to").textContent = email;
-          document.getElementById("email-name").textContent =
-            name.split(" ")[0];
-          document.getElementById("code-display").textContent = code;
-          document.getElementById("email-modal").classList.add("open");
-          startTimer();
-        } else {
-          // No 2FA — log straight in
-          SavePlate.setUser({ name, email });
-          location.href = "dashboard.html";
         }
       }
 
