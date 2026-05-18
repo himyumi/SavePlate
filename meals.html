@@ -116,8 +116,13 @@
       </div>
     </div>
 
+    <script src="https://www.gstatic.com/firebasejs/10.7.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.2/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
     <script src="js/data.js"></script>
     <script>
+      SavePlate.ready.then(function () {
       SavePlate.guardAuth();
       document.getElementById("sidebar-root").innerHTML =
         SavePlate.renderSidebar("meals");
@@ -225,15 +230,15 @@
         grid.innerHTML = html;
       }
 
-      function selectDay(_, y, m, d) {
+      window.selectDay = function (_, y, m, d) {
         selectedDate = { y, m, d };
         viewYear = y;
         viewMonth = m;
         renderCalendar();
         renderDetailCard();
-      }
+      };
 
-      function changeMonth(delta) {
+      window.changeMonth = function (delta) {
         viewMonth += delta;
         if (viewMonth > 11) {
           viewMonth = 0;
@@ -244,7 +249,7 @@
           viewYear--;
         }
         renderCalendar();
-      }
+      };
 
       function renderDetailCard() {
         if (!selectedDate) return;
@@ -307,7 +312,7 @@
         }
       }
 
-      function deleteMeal(isoKey, abbr, idx) {
+      window.deleteMeal = function (isoKey, abbr, idx) {
         const meals = SavePlate.meals;
         // Try ISO key first, then abbr
         const isoMeals = meals[isoKey] || [];
@@ -325,29 +330,29 @@
         SavePlate.meals = meals;
         renderCalendar();
         renderDetailCard();
-      }
+      };
 
-      function closeDetailCard() {
+      window.closeDetailCard = function () {
         selectedDate = null;
         document.getElementById("mdc-body").innerHTML =
           `<div class="mdc-empty">Select a day on the calendar<br>to see planned meals</div>`;
         document.getElementById("mdc-day-title").textContent = "Select a Day";
         document.getElementById("expiry-suggestions").innerHTML = "";
         renderCalendar();
-      }
+      };
 
-      function openPlanModal() {
+      window.openPlanModal = function () {
         document.getElementById("plan-modal").classList.add("open");
-      }
-      function openPlanModalFor(day) {
+      };
+      window.openPlanModalFor = function (day) {
         document.getElementById("pm-day").value = day;
         openPlanModal();
-      }
-      function closePlanModal() {
+      };
+      window.closePlanModal = function () {
         document.getElementById("plan-modal").classList.remove("open");
-      }
+      };
 
-      function saveMeal() {
+      window.saveMeal = function () {
         const day = document.getElementById("pm-day").value;
         const type = document.getElementById("pm-type").value;
         const name = document.getElementById("pm-name").value.trim();
@@ -369,15 +374,15 @@
         );
         renderCalendar();
         if (selectedDate) renderDetailCard();
-      }
+      };
 
       document.getElementById("plan-modal").addEventListener("click", (e) => {
         if (e.target.id === "plan-modal") closePlanModal();
       });
 
       renderCalendar();
-      // Select today by default
       selectDay(null, today.getFullYear(), today.getMonth(), today.getDate());
+      }); // end SavePlate.ready.then
     </script>
   </body>
 </html>
