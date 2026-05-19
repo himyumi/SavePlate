@@ -11,49 +11,90 @@
     <div class="main-wrap">
       <div id="topbar-root"></div>
       <div class="page-content">
-
-        <!-- Header -->
-        <div style="margin-bottom: 22px">
+        <div style="margin-bottom: 16px">
           <div class="page-title">Food Analytics</div>
           <div class="page-sub">Track your food-saving impact and progress</div>
+        </div>
+
+        <!-- Period Filter -->
+        <div class="period-bar">
+          <span class="period-label">View by:</span>
+          <button
+            class="period-btn active"
+            onclick="setPeriod('monthly', this)"
+          >
+            📅 Monthly
+          </button>
+          <button class="period-btn" onclick="setPeriod('weekly', this)">
+            📆 Weekly
+          </button>
         </div>
 
         <!-- Impact Tiles -->
         <div class="section-label">Overview</div>
         <div class="impact-grid" id="impact-grid"></div>
 
-        <!-- Row 1: Bar Chart + Category Breakdown -->
-        <div class="section-label">Trends & Inventory</div>
+        <!-- Row 1: Main chart + Category breakdown -->
+        <div class="section-label">Trends &amp; Inventory</div>
         <div class="analytics-grid">
           <div class="an-card">
-            <div class="an-card-title">Monthly Overview</div>
-            <div class="an-card-sub">Food saved vs. wasted vs. donated (kg)</div>
-            <div class="legend">
-              <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Saved</div>
-              <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>Wasted</div>
-              <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div>Donated</div>
+            <div class="an-card-title" id="main-chart-title">
+              Monthly Overview
+            </div>
+            <div class="an-card-sub" id="main-chart-sub">
+              Food saved vs. wasted vs. donated (kg) — click a bar for details
+            </div>
+            <div class="legend" id="chart-legend">
+              <div class="legend-item">
+                <div class="legend-dot" style="background: var(--green)"></div>
+                Saved
+              </div>
+              <div class="legend-item">
+                <div class="legend-dot" style="background: var(--red)"></div>
+                Wasted
+              </div>
+              <div class="legend-item">
+                <div class="legend-dot" style="background: var(--amber)"></div>
+                Donated
+              </div>
             </div>
             <div class="bar-chart" id="bar-chart"></div>
+            <div class="month-detail" id="month-detail">
+              <div class="month-detail-title" id="month-detail-title">
+                Details
+              </div>
+              <div id="month-detail-rows"></div>
+            </div>
           </div>
 
           <div class="an-card">
             <div class="an-card-title">Category Breakdown</div>
-            <div class="an-card-sub">Items by food category in your inventory</div>
+            <div class="an-card-sub" id="cat-chart-sub">
+              Items by food category — click to filter
+            </div>
+            <div class="cat-filter-row" id="cat-filters"></div>
             <div class="cat-chart" id="cat-chart"></div>
           </div>
         </div>
 
-        <!-- Row 2: Expiry Status + Waste Trend -->
+        <!-- Row 2: Donut + Waste Trend -->
         <div class="analytics-grid">
           <div class="an-card">
             <div class="an-card-title">Expiry Status Breakdown</div>
-            <div class="an-card-sub">Current status of your inventory items</div>
+            <div class="an-card-sub">
+              Current status of your inventory items
+            </div>
             <div class="status-donut-wrap">
-              <svg class="donut-svg" id="donut-svg" width="130" height="130" viewBox="0 0 130 130"></svg>
+              <svg
+                class="donut-svg"
+                id="donut-svg"
+                width="130"
+                height="130"
+                viewBox="0 0 130 130"
+              ></svg>
               <div class="donut-legend" id="donut-legend"></div>
             </div>
           </div>
-
           <div class="an-card">
             <div class="an-card-title">Waste Trend</div>
             <div class="an-card-sub">Monthly food wasted — lower is better</div>
@@ -61,15 +102,16 @@
           </div>
         </div>
 
-        <!-- Row 3: Donation Activity + Meal Plan Summary -->
+        <!-- Row 3: Donations + Meals -->
         <div class="section-label">Activity</div>
         <div class="analytics-grid">
           <div class="an-card-dark">
             <div class="an-card-title">🤝 Donation Activity</div>
-            <div class="an-card-sub">Recent donation listings and their status</div>
+            <div class="an-card-sub">
+              Recent donation listings and their status
+            </div>
             <div id="donation-activity"></div>
           </div>
-
           <div class="an-card-dark">
             <div class="an-card-title">📅 Weekly Meal Summary</div>
             <div class="an-card-sub">Meals planned this week</div>
@@ -77,14 +119,15 @@
           </div>
         </div>
 
-        <!-- Progress Goals -->
-        <div class="section-label">Goals & Progress</div>
+        <!-- Progress -->
+        <div class="section-label">Goals &amp; Progress</div>
         <div class="an-card" style="margin-bottom: 22px">
           <div class="an-card-title">🎯 Monthly Goals</div>
-          <div class="an-card-sub">Your food-saving achievements this month</div>
+          <div class="an-card-sub">
+            Your food-saving achievements this month
+          </div>
           <div id="progress-section"></div>
         </div>
-
       </div>
     </div>
 
@@ -94,231 +137,803 @@
     <script src="js/firebase-config.js"></script>
     <script src="js/data.js"></script>
     <script>
+      // ── State ──
+      var _state = { period: "monthly", selCat: "all", selBar: null };
+      var _data = {};
+
+      window.setPeriod = function (period, btn) {
+        _state.period = period;
+        _state.selBar = null;
+        document
+          .querySelectorAll(".period-btn")
+          .forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        renderMainChart();
+      };
+
+      window.selectBar = function (idx) {
+        _state.selBar = _state.selBar === idx ? null : idx;
+
+        if (_state.period === "monthly") {
+          renderMonthlyChart();
+        } else {
+          renderWeeklyChart();
+        }
+
+        var detail = document.getElementById("month-detail");
+        if (_state.selBar === null) {
+          detail.classList.remove("open");
+          return;
+        }
+
+        if (_state.period === "monthly") {
+          var r = _data.analytics[idx];
+          document.getElementById("month-detail-title").textContent =
+            "📊 " + r.m + " — Breakdown";
+          document.getElementById("month-detail-rows").innerHTML = [
+            { label: "🌿 Food Saved", val: (r.saved || 0) + "kg" },
+            { label: "🗑️ Estimated Wasted", val: (r.wasted || 0) + "kg" },
+            { label: "🤝 Donated", val: (r.donated || 0) + "kg" },
+            {
+              label: "♻️ Save Rate",
+              val:
+                r.saved > 0
+                  ? Math.round(((r.saved - (r.wasted || 0)) / r.saved) * 100) +
+                    "%"
+                  : "N/A",
+            },
+            {
+              label: "📦 Net Positive",
+              val: ((r.saved || 0) - (r.wasted || 0)).toFixed(1) + "kg",
+            },
+          ]
+            .map(function (row) {
+              return (
+                '<div class="month-detail-row"><span>' +
+                row.label +
+                '</span><span class="month-detail-val">' +
+                row.val +
+                "</span></div>"
+              );
+            })
+            .join("");
+        } else {
+          // Weekly view - show weekly data
+          var weeklyData = _data.weeklyAnalytics || [];
+          if (weeklyData[idx]) {
+            var w = weeklyData[idx];
+            document.getElementById("month-detail-title").textContent =
+              "📊 Week of " + w.week + " — Breakdown";
+            document.getElementById("month-detail-rows").innerHTML = [
+              { label: "🌿 Food Saved", val: (w.saved || 0) + "kg" },
+              { label: "🗑️ Estimated Wasted", val: (w.wasted || 0) + "kg" },
+              { label: "🤝 Donated", val: (w.donated || 0) + "kg" },
+              {
+                label: "♻️ Save Rate",
+                val:
+                  w.saved > 0
+                    ? Math.round(
+                        ((w.saved - (w.wasted || 0)) / w.saved) * 100,
+                      ) + "%"
+                    : "N/A",
+              },
+              {
+                label: "📦 Net Positive",
+                val: ((w.saved || 0) - (w.wasted || 0)).toFixed(1) + "kg",
+              },
+            ]
+              .map(function (row) {
+                return (
+                  '<div class="month-detail-row"><span>' +
+                  row.label +
+                  '</span><span class="month-detail-val">' +
+                  row.val +
+                  "</span></div>"
+                );
+              })
+              .join("");
+          }
+        }
+        detail.classList.add("open");
+      };
+
+      window.selectCatBar = function (cat) {
+        _state.selCat = _state.selCat === cat ? "all" : cat;
+        renderCategoryBarChart();
+        renderCatBreakdown();
+      };
+
+      window.selectCatChip = function (cat, btn) {
+        _state.selCat = cat;
+        renderCatBreakdown();
+      };
+
+      function renderMainChart() {
+        document.getElementById("month-detail").classList.remove("open");
+        if (_state.period === "monthly") {
+          renderMonthlyChart();
+        } else {
+          renderWeeklyChart();
+        }
+      }
+
+      function renderMonthlyChart() {
+        document.getElementById("main-chart-title").textContent =
+          "Monthly Overview";
+        document.getElementById("main-chart-sub").textContent =
+          "Food saved vs. wasted vs. donated (kg) — click a bar for details";
+        document.getElementById("chart-legend").style.display = "flex";
+        var analytics = _data.analytics || [];
+        if (analytics.length === 0) {
+          document.getElementById("bar-chart").innerHTML =
+            '<div class="empty-analytics">No data yet. Start logging food items!</div>';
+          return;
+        }
+        var allVals = analytics.flatMap(function (r) {
+          return [r.saved || 0, r.wasted || 0, r.donated || 0];
+        });
+        var maxVal = Math.max.apply(null, allVals.concat([0.1]));
+        var barH = 120;
+        document.getElementById("bar-chart").innerHTML = analytics
+          .map(function (r, idx) {
+            var hS = Math.round(((r.saved || 0) / maxVal) * barH);
+            var hW = Math.round(((r.wasted || 0) / maxVal) * barH);
+            var hD = Math.round(((r.donated || 0) / maxVal) * barH);
+            var sel = _state.selBar === idx;
+            return (
+              '<div class="bar-group" onclick="selectBar(' +
+              idx +
+              ')">' +
+              '<div class="bar-wrap">' +
+              '<div class="bar bar-saved ' +
+              (sel ? "bar-selected" : "") +
+              '" style="height:' +
+              hS +
+              'px" data-tip="Saved: ' +
+              r.saved +
+              'kg"></div>' +
+              '<div class="bar bar-wasted ' +
+              (sel ? "bar-selected" : "") +
+              '" style="height:' +
+              hW +
+              'px" data-tip="Wasted: ' +
+              r.wasted +
+              'kg"></div>' +
+              '<div class="bar bar-donated ' +
+              (sel ? "bar-selected" : "") +
+              '" style="height:' +
+              hD +
+              'px" data-tip="Donated: ' +
+              (r.donated || 0) +
+              'kg"></div>' +
+              "</div>" +
+              '<div class="bar-label" style="' +
+              (sel ? "color:var(--navy);font-weight:700" : "") +
+              '">' +
+              r.m +
+              "</div>" +
+              "</div>"
+            );
+          })
+          .join("");
+      }
+
+      function renderWeeklyChart() {
+        document.getElementById("main-chart-title").textContent =
+          "Weekly Overview";
+        document.getElementById("main-chart-sub").textContent =
+          "Food saved vs. wasted vs. donated per week (kg) — click a bar for details";
+        document.getElementById("chart-legend").style.display = "flex";
+
+        // Generate weekly data from monthly analytics
+        var weeklyData = generateWeeklyData();
+        _data.weeklyAnalytics = weeklyData;
+
+        if (weeklyData.length === 0) {
+          document.getElementById("bar-chart").innerHTML =
+            '<div class="empty-analytics">No weekly data yet. Start logging food items!</div>';
+          return;
+        }
+
+        var allVals = weeklyData.flatMap(function (w) {
+          return [w.saved || 0, w.wasted || 0, w.donated || 0];
+        });
+        var maxVal = Math.max.apply(null, allVals.concat([0.1]));
+        var barH = 120;
+
+        document.getElementById("bar-chart").innerHTML = weeklyData
+          .map(function (w, idx) {
+            var hS = Math.round(((w.saved || 0) / maxVal) * barH);
+            var hW = Math.round(((w.wasted || 0) / maxVal) * barH);
+            var hD = Math.round(((w.donated || 0) / maxVal) * barH);
+            var sel = _state.selBar === idx;
+            return (
+              '<div class="bar-group" onclick="selectBar(' +
+              idx +
+              ')">' +
+              '<div class="bar-wrap">' +
+              '<div class="bar bar-saved ' +
+              (sel ? "bar-selected" : "") +
+              '" style="height:' +
+              hS +
+              'px" data-tip="Saved: ' +
+              w.saved +
+              'kg"></div>' +
+              '<div class="bar bar-wasted ' +
+              (sel ? "bar-selected" : "") +
+              '" style="height:' +
+              hW +
+              'px" data-tip="Wasted: ' +
+              w.wasted +
+              'kg"></div>' +
+              '<div class="bar bar-donated ' +
+              (sel ? "bar-selected" : "") +
+              '" style="height:' +
+              hD +
+              'px" data-tip="Donated: ' +
+              (w.donated || 0) +
+              'kg"></div>' +
+              "</div>" +
+              '<div class="bar-label" style="' +
+              (sel ? "color:var(--navy);font-weight:700" : "") +
+              '">' +
+              w.week +
+              "</div>" +
+              "</div>"
+            );
+          })
+          .join("");
+      }
+
+      function generateWeeklyData() {
+        var analytics = _data.analytics || [];
+        if (analytics.length === 0) return [];
+
+        var weeklyData = [];
+        // For each month, split into 4 weeks approximately
+        analytics.forEach(function (monthData) {
+          var weeks = [
+            {
+              week: monthData.m + " W1",
+              saved: (monthData.saved || 0) * 0.25,
+              wasted: (monthData.wasted || 0) * 0.25,
+              donated: (monthData.donated || 0) * 0.25,
+            },
+            {
+              week: monthData.m + " W2",
+              saved: (monthData.saved || 0) * 0.25,
+              wasted: (monthData.wasted || 0) * 0.25,
+              donated: (monthData.donated || 0) * 0.25,
+            },
+            {
+              week: monthData.m + " W3",
+              saved: (monthData.saved || 0) * 0.25,
+              wasted: (monthData.wasted || 0) * 0.25,
+              donated: (monthData.donated || 0) * 0.25,
+            },
+            {
+              week: monthData.m + " W4",
+              saved: (monthData.saved || 0) * 0.25,
+              wasted: (monthData.wasted || 0) * 0.25,
+              donated: (monthData.donated || 0) * 0.25,
+            },
+          ];
+          weeklyData.push.apply(weeklyData, weeks);
+        });
+
+        return weeklyData;
+      }
+
+      function renderCategoryBarChart() {
+        var catCounts = {};
+        (_data.allInv || []).forEach(function (i) {
+          catCounts[i.cat] = (catCounts[i.cat] || 0) + 1;
+        });
+        var entries = Object.entries(catCounts).sort(function (a, b) {
+          return b[1] - a[1];
+        });
+        var maxC = Math.max.apply(
+          null,
+          entries
+            .map(function (e) {
+              return e[1];
+            })
+            .concat([1]),
+        );
+        var barH = 120;
+        var colors = [
+          "#4e79a7",
+          "#f28e2b",
+          "#e15759",
+          "#76b7b2",
+          "#59a14f",
+          "#edc948",
+          "#b07aa1",
+          "#ff9da7",
+        ];
+        document.getElementById("bar-chart").innerHTML = entries
+          .map(function (entry, i) {
+            var cat = entry[0],
+              cnt = entry[1];
+            var h = Math.round((cnt / maxC) * barH);
+            var col = colors[i % colors.length];
+            var sel = _state.selCat === cat;
+            return (
+              '<div class="bar-group" onclick="selectCatBar(\'' +
+              cat +
+              "')\">" +
+              '<div class="bar-wrap">' +
+              '<div class="bar ' +
+              (sel ? "bar-selected" : "") +
+              '" style="height:' +
+              h +
+              "px;background:" +
+              col +
+              ';min-width:20px;border-radius:4px 4px 0 0" data-tip="' +
+              cat +
+              ": " +
+              cnt +
+              '"></div>' +
+              "</div>" +
+              '<div class="bar-label" style="font-size:10px;' +
+              (sel ? "color:var(--navy);font-weight:700" : "") +
+              '">' +
+              (SavePlate.catEmoji[cat] || "🍽") +
+              "</div>" +
+              "</div>"
+            );
+          })
+          .join("");
+      }
+
+      function renderCatBreakdown() {
+        var catCounts = {};
+        (_data.allInv || []).forEach(function (i) {
+          catCounts[i.cat] = (catCounts[i.cat] || 0) + 1;
+        });
+        var catMax = Math.max.apply(null, Object.values(catCounts).concat([1]));
+        // chips
+        document.getElementById("cat-filters").innerHTML = [
+          '<button class="cat-chip ' +
+            (_state.selCat === "all" ? "active" : "") +
+            '" onclick="selectCatChip(\'all\',this)">All</button>',
+        ]
+          .concat(
+            Object.keys(catCounts).map(function (cat) {
+              return (
+                '<button class="cat-chip ' +
+                (_state.selCat === cat ? "active" : "") +
+                '" onclick="selectCatChip(\'' +
+                cat +
+                "',this)\">" +
+                (SavePlate.catEmoji[cat] || "🍽") +
+                " " +
+                cat +
+                "</button>"
+              );
+            }),
+          )
+          .join("");
+        // rows
+        var filtered =
+          _state.selCat === "all"
+            ? Object.entries(catCounts)
+            : Object.entries(catCounts).filter(function (e) {
+                return e[0] === _state.selCat;
+              });
+        document.getElementById("cat-chart-sub").textContent =
+          _state.selCat === "all"
+            ? "Items by food category — click to filter"
+            : "Showing: " +
+              _state.selCat +
+              " (" +
+              (catCounts[_state.selCat] || 0) +
+              " items)";
+        document.getElementById("cat-chart").innerHTML =
+          filtered
+            .sort(function (a, b) {
+              return b[1] - a[1];
+            })
+            .map(function (entry) {
+              var cat = entry[0],
+                cnt = entry[1];
+              return (
+                '<div class="cat-row">' +
+                '<div class="cat-name">' +
+                (SavePlate.catEmoji[cat] || "🍽") +
+                " " +
+                cat +
+                "</div>" +
+                '<div class="cat-bar-wrap"><div class="cat-bar-fill" style="width:' +
+                Math.round((cnt / catMax) * 100) +
+                '%"></div></div>' +
+                '<div class="cat-count">' +
+                cnt +
+                "</div>" +
+                "</div>"
+              );
+            })
+            .join("") ||
+          '<div class="empty-analytics">No items in this category.</div>';
+      }
+
       SavePlate.ready.then(function () {
-      SavePlate.guardAuth();
-      document.getElementById("sidebar-root").innerHTML = SavePlate.renderSidebar("analytics");
-      document.getElementById("topbar-root").innerHTML = SavePlate.renderTopbar("Analytics");
+        SavePlate.guardAuth();
+        document.getElementById("sidebar-root").innerHTML =
+          SavePlate.renderSidebar("analytics");
+        document.getElementById("topbar-root").innerHTML =
+          SavePlate.renderTopbar("Analytics");
 
-      const analytics  = SavePlate.analytics;
-      const allInv     = SavePlate.inventory;
-      const activeInv  = allInv.filter(i => !i.usedUp && !i.donated);
-      const donations  = SavePlate.donations;
-      const meals      = SavePlate.meals;
+        var analytics = SavePlate.analytics;
+        var allInv = SavePlate.inventory;
+        var activeInv = allInv.filter(function (i) {
+          return !i.usedUp && !i.donated;
+        });
+        var donations = SavePlate.donations;
+        var meals = SavePlate.meals;
 
-      // ── Aggregate totals ──────────────────────────────────────
-      const totalSaved   = analytics.reduce((a, b) => a + (b.saved   || 0), 0);
-      const totalWasted  = analytics.reduce((a, b) => a + (b.wasted  || 0), 0);
-      const totalDonated = analytics.reduce((a, b) => a + (b.donated || 0), 0);
-      const claimedCount = donations.filter(d => d.claimed).length;
-      const availCount   = donations.filter(d => !d.claimed).length;
-      const expiringCount = activeInv.filter(i => i.status === "danger" || i.status === "warn").length;
-      const wasteScore   = totalSaved > 0 ? Math.round(((totalSaved - totalWasted) / totalSaved) * 100) : 0;
+        // store in shared _data so render functions can access
+        _data = {
+          analytics: analytics,
+          allInv: allInv,
+          activeInv: activeInv,
+          donations: donations,
+          meals: meals,
+        };
 
-      // ── 1. Impact Tiles ───────────────────────────────────────
-      document.getElementById("impact-grid").innerHTML = [
-        { num: totalSaved.toFixed(1)   + "kg", label: "Total Food Saved",    color: "var(--green)" },
-        { num: totalDonated.toFixed(1) + "kg", label: "Total Donated",       color: "var(--amber)" },
-        { num: totalWasted.toFixed(1)  + "kg", label: "Estimated Wasted",    color: "var(--red)"   },
-        { num: donations.length,               label: "Donations Listed",    color: "var(--White)"  },
-        { num: activeInv.length,               label: "Items in Inventory",  color: "var(--White)"      },
-        { num: expiringCount,                  label: "Expiring Soon",       color: "var(--red)"   },
-        { num: claimedCount,                   label: "Donations Claimed",   color: "var(--white)" },
-        { num: wasteScore + "%",               label: "Waste Save Rate",     color: "var(--green)" },
-      ].map(t => `
-        <div class="impact-tile">
-          <div class="impact-num" style="color:${t.color}">${t.num}</div>
-          <div class="impact-label">${t.label}</div>
-        </div>`).join("");
+        // ── Totals ──────────────────────────────────────────────
+        var totalSaved = analytics.reduce(function (a, b) {
+          return a + (b.saved || 0);
+        }, 0);
+        var totalWasted = analytics.reduce(function (a, b) {
+          return a + (b.wasted || 0);
+        }, 0);
+        var totalDonated = analytics.reduce(function (a, b) {
+          return a + (b.donated || 0);
+        }, 0);
+        var claimedCount = donations.filter(function (d) {
+          return d.claimed;
+        }).length;
+        var expiringCount = activeInv.filter(function (i) {
+          return i.status === "danger" || i.status === "warn";
+        }).length;
+        var wasteScore =
+          totalSaved > 0
+            ? Math.round(((totalSaved - totalWasted) / totalSaved) * 100)
+            : 0;
 
-      // ── 2. Monthly Bar Chart ──────────────────────────────────
-      if (analytics.length === 0) {
-        document.getElementById("bar-chart").innerHTML =
-          `<div class="empty-analytics">No data yet. Start logging food items!</div>`;
-      } else {
-        const maxVal = Math.max(...analytics.flatMap(r => [r.saved||0, r.wasted||0, r.donated||0]), 0.1);
-        const barH = 120;
-        document.getElementById("bar-chart").innerHTML = analytics.map(r => {
-          const hS = Math.round(((r.saved   || 0) / maxVal) * barH);
-          const hW = Math.round(((r.wasted  || 0) / maxVal) * barH);
-          const hD = Math.round(((r.donated || 0) / maxVal) * barH);
-          return `<div class="bar-group">
-            <div class="bar-wrap">
-              <div class="bar bar-saved"   style="height:${hS}px" data-tip="Saved: ${r.saved}kg"></div>
-              <div class="bar bar-wasted"  style="height:${hW}px" data-tip="Wasted: ${r.wasted}kg"></div>
-              <div class="bar bar-donated" style="height:${hD}px" data-tip="Donated: ${r.donated||0}kg"></div>
-            </div>
-            <div class="bar-label">${r.m}</div>
-          </div>`;
-        }).join("");
-      }
+        // ── Impact Tiles ─────────────────────────────────────────
+        document.getElementById("impact-grid").innerHTML = [
+          {
+            num: totalSaved.toFixed(1) + "kg",
+            label: "Total Food Saved",
+            color: "var(--green)",
+          },
+          {
+            num: totalDonated.toFixed(1) + "kg",
+            label: "Total Donated",
+            color: "var(--amber)",
+          },
+          {
+            num: totalWasted.toFixed(1) + "kg",
+            label: "Estimated Wasted",
+            color: "var(--red)",
+          },
+          {
+            num: donations.length,
+            label: "Donations Listed",
+            color: "var(--White)",
+          },
+          {
+            num: activeInv.length,
+            label: "Items in Inventory",
+            color: "var(--White)",
+          },
+          { num: expiringCount, label: "Expiring Soon", color: "var(--red)" },
+          {
+            num: claimedCount,
+            label: "Donations Claimed",
+            color: "var(--white)",
+          },
+          {
+            num: wasteScore + "%",
+            label: "Waste Save Rate",
+            color: "var(--green)",
+          },
+        ]
+          .map(function (t) {
+            return (
+              '<div class="impact-tile"><div class="impact-num" style="color:' +
+              t.color +
+              '">' +
+              t.num +
+              '</div><div class="impact-label">' +
+              t.label +
+              "</div></div>"
+            );
+          })
+          .join("");
 
-      // ── 3. Category Breakdown ─────────────────────────────────
-      const catCounts = {};
-      allInv.forEach(i => { catCounts[i.cat] = (catCounts[i.cat] || 0) + 1; });
-      const catMax = Math.max(1, ...Object.values(catCounts));
-      document.getElementById("cat-chart").innerHTML =
-        Object.entries(catCounts).sort((a,b) => b[1]-a[1]).map(([cat, cnt]) =>
-          `<div class="cat-row">
-            <div class="cat-name">${SavePlate.catEmoji[cat]||"🍽"} ${cat}</div>
-            <div class="cat-bar-wrap"><div class="cat-bar-fill" style="width:${Math.round((cnt/catMax)*100)}%"></div></div>
-            <div class="cat-count">${cnt}</div>
-          </div>`
-        ).join("") || `<div class="empty-analytics">No inventory items yet.</div>`;
+        // ── Donut ─────────────────────────────────────────────────
+        var statusCounts = { danger: 0, warn: 0, ok: 0, used: 0, donated: 0 };
+        allInv.forEach(function (i) {
+          if (i.usedUp) statusCounts.used++;
+          else if (i.donated) statusCounts.donated++;
+          else statusCounts[i.status]++;
+        });
+        var donutData = [
+          {
+            label: "Expiring Soon",
+            count: statusCounts.danger,
+            color: "#e53935",
+          },
+          { label: "Watch", count: statusCounts.warn, color: "#f5a623" },
+          { label: "Fresh", count: statusCounts.ok, color: "#4caf50" },
+          { label: "Donated", count: statusCounts.donated, color: "#5c7cfa" },
+          { label: "Used Up", count: statusCounts.used, color: "#90a4ae" },
+        ].filter(function (d) {
+          return d.count > 0;
+        });
+        var donutTotal =
+          donutData.reduce(function (a, b) {
+            return a + b.count;
+          }, 0) || 1;
+        var cx = 65,
+          cy = 65,
+          r = 48,
+          strokeW = 20,
+          circ = 2 * Math.PI * r,
+          offset = 0;
+        var segs = donutData
+          .map(function (d) {
+            var dash = (d.count / donutTotal) * circ,
+              gap = circ - dash;
+            var s =
+              '<circle cx="' +
+              cx +
+              '" cy="' +
+              cy +
+              '" r="' +
+              r +
+              '" fill="none" stroke="' +
+              d.color +
+              '" stroke-width="' +
+              strokeW +
+              '" stroke-dasharray="' +
+              dash +
+              " " +
+              gap +
+              '" stroke-dashoffset="' +
+              -offset +
+              '" transform="rotate(-90 ' +
+              cx +
+              " " +
+              cy +
+              ')" />';
+            offset += dash;
+            return s;
+          })
+          .join("");
+        document.getElementById("donut-svg").innerHTML =
+          segs +
+          '<text x="' +
+          cx +
+          '" y="' +
+          (cy - 4) +
+          '" text-anchor="middle" font-size="18" font-weight="700" fill="#2c3e50">' +
+          donutTotal +
+          "</text>" +
+          '<text x="' +
+          cx +
+          '" y="' +
+          (cy + 14) +
+          '" text-anchor="middle" font-size="10" fill="#757575">items</text>';
+        document.getElementById("donut-legend").innerHTML =
+          donutData
+            .map(function (d) {
+              return (
+                '<div class="donut-legend-item"><div class="donut-dot" style="background:' +
+                d.color +
+                '"></div><span>' +
+                d.label +
+                '</span><span class="donut-val">' +
+                d.count +
+                "</span></div>"
+              );
+            })
+            .join("") ||
+          '<div style="color:#aaa;font-size:13px;">No items.</div>';
 
-      // ── 4. Expiry Status Donut ────────────────────────────────
-      const statusCounts = { danger: 0, warn: 0, ok: 0, used: 0, donated: 0 };
-      allInv.forEach(i => {
-        if (i.usedUp)        statusCounts.used++;
-        else if (i.donated)  statusCounts.donated++;
-        else                 statusCounts[i.status]++;
-      });
+        // ── Waste Trend ───────────────────────────────────────────
+        if (analytics.length === 0) {
+          document.getElementById("waste-trend").innerHTML =
+            '<div class="empty-analytics">No trend data yet.</div>';
+        } else {
+          var maxWaste = Math.max.apply(
+            null,
+            analytics
+              .map(function (r) {
+                return r.wasted || 0;
+              })
+              .concat([0.1]),
+          );
+          document.getElementById("waste-trend").innerHTML = analytics
+            .map(function (r, idx) {
+              var wastedVal = r.wasted || 0;
+              var prev = analytics[idx - 1],
+                change = prev ? wastedVal - (prev.wasted || 0) : 0;
+              var arrow = change < 0 ? "↓" : change > 0 ? "↑" : "→";
+              var ac =
+                change < 0
+                  ? "var(--green)"
+                  : change > 0
+                    ? "var(--red)"
+                    : "#aaa";
+              var fillPct = Math.round((wastedVal / maxWaste) * 100);
+              var bc =
+                wastedVal <= 1
+                  ? "var(--green)"
+                  : wastedVal <= 2
+                    ? "var(--amber)"
+                    : "var(--red)";
+              return (
+                '<div class="trend-row">' +
+                '<div class="trend-month">' +
+                r.m +
+                "</div>" +
+                '<div class="trend-bar-wrap"><div class="trend-bar-fill" style="width:' +
+                fillPct +
+                "%;background:" +
+                bc +
+                '"></div></div>' +
+                '<div class="trend-val" style="color:' +
+                bc +
+                '">' +
+                wastedVal +
+                "kg</div>" +
+                '<div class="trend-arrow" style="color:' +
+                ac +
+                '">' +
+                arrow +
+                "</div>" +
+                "</div>"
+              );
+            })
+            .join("");
+        }
 
-      const donutData = [
-        { label: "Expiring Soon", count: statusCounts.danger,  color: "#e53935" },
-        { label: "Watch",         count: statusCounts.warn,    color: "#f5a623" },
-        { label: "Fresh",         count: statusCounts.ok,      color: "#4caf50" },
-        { label: "Donated",       count: statusCounts.donated, color: "#5c7cfa" },
-        { label: "Used Up",       count: statusCounts.used,    color: "#90a4ae" },
-      ].filter(d => d.count > 0);
+        // ── Donation Activity ─────────────────────────────────────
+        document.getElementById("donation-activity").innerHTML =
+          donations.length === 0
+            ? '<div class="empty-dark">No donations listed yet.<br><a href="inventory.html" style="color:var(--amber)">Convert an item →</a></div>'
+            : donations
+                .slice(0, 6)
+                .map(function (d) {
+                  return (
+                    '<div class="donation-row"><div class="donation-emoji">' +
+                    d.emoji +
+                    "</div>" +
+                    '<div style="flex:1"><div class="donation-name">' +
+                    d.name +
+                    "</div>" +
+                    '<div class="donation-meta">' +
+                    d.qty +
+                    " · " +
+                    d.loc +
+                    " · by " +
+                    d.donor +
+                    "</div></div>" +
+                    '<span class="donation-badge ' +
+                    (d.claimed ? "badge-claimed" : "badge-available") +
+                    '">' +
+                    (d.claimed ? "✅ Claimed" : "⏳ Available") +
+                    "</span>" +
+                    "</div>"
+                  );
+                })
+                .join("");
 
-      const donutTotal = donutData.reduce((a, b) => a + b.count, 0) || 1;
-      const cx = 65, cy = 65, r = 48, strokeW = 20;
-      const circ = 2 * Math.PI * r;
-      let offset = 0;
-      const donutSegments = donutData.map(d => {
-        const dash = (d.count / donutTotal) * circ;
-        const gap  = circ - dash;
-        const seg  = `<circle cx="${cx}" cy="${cy}" r="${r}"
-          fill="none" stroke="${d.color}" stroke-width="${strokeW}"
-          stroke-dasharray="${dash} ${gap}"
-          stroke-dashoffset="${-offset}"
-          transform="rotate(-90 ${cx} ${cy})" />`;
-        offset += dash;
-        return seg;
-      }).join("");
+        // ── Weekly Meal Summary ───────────────────────────────────
+        var dayOrder = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+        var mealRows = dayOrder
+          .filter(function (day) {
+            return meals[day] && meals[day].length > 0;
+          })
+          .map(function (day) {
+            var names = meals[day]
+              .map(function (m) {
+                return m.n || m.name;
+              })
+              .join(", ");
+            return (
+              '<div class="meal-summary-row">' +
+              '<div class="meal-summary-day">' +
+              day +
+              "</div>" +
+              '<div class="meal-summary-names">' +
+              names +
+              "</div>" +
+              '<div class="meal-summary-count">' +
+              meals[day].length +
+              " meal" +
+              (meals[day].length > 1 ? "s" : "") +
+              "</div>" +
+              "</div>"
+            );
+          })
+          .join("");
+        var totalMeals = dayOrder.reduce(function (a, day) {
+          return a + (meals[day] ? meals[day].length : 0);
+        }, 0);
+        document.getElementById("meal-summary").innerHTML = mealRows
+          ? mealRows +
+            '<div style="margin-top:14px;font-size:12px;color:#9ab5cc;text-align:right">' +
+            totalMeals +
+            " meals planned this week</div>"
+          : '<div class="empty-dark">No meals planned yet.<br><a href="meals.html" style="color:var(--amber)">Plan meals →</a></div>';
 
-      document.getElementById("donut-svg").innerHTML =
-        donutSegments +
-        `<text x="${cx}" y="${cy - 4}" text-anchor="middle" font-size="18" font-weight="700" fill="#2c3e50">${donutTotal}</text>
-         <text x="${cx}" y="${cy + 14}" text-anchor="middle" font-size="10" fill="#757575">items</text>`;
+        // ── Progress Goals ────────────────────────────────────────
+        var cur = analytics[analytics.length - 1] || {
+          saved: 0,
+          wasted: 0,
+          donated: 0,
+        };
+        var savedGoal = 10,
+          donateGoal = 5,
+          wasteGoal = 2,
+          invGoal = 10;
+        document.getElementById("progress-section").innerHTML =
+          '<div class="progress-section">' +
+          '<div class="progress-label"><span>🌿 Food Saved This Month</span><span style="color:var(--green)">' +
+          (cur.saved || 0) +
+          "kg / " +
+          savedGoal +
+          "kg</span></div>" +
+          '<div class="progress-bar"><div class="progress-fill" style="width:' +
+          Math.min(100, ((cur.saved || 0) / savedGoal) * 100) +
+          '%;background:var(--green)"></div></div>' +
+          "</div>" +
+          '<div class="progress-section">' +
+          '<div class="progress-label"><span>🤝 Donations This Month</span><span style="color:var(--amber)">' +
+          (cur.donated || 0) +
+          "kg / " +
+          donateGoal +
+          "kg</span></div>" +
+          '<div class="progress-bar"><div class="progress-fill" style="width:' +
+          Math.min(100, ((cur.donated || 0) / donateGoal) * 100) +
+          '%;background:var(--amber)"></div></div>' +
+          "</div>" +
+          '<div class="progress-section">' +
+          '<div class="progress-label"><span>♻️ Waste Reduction Target</span><span style="color:' +
+          ((cur.wasted || 0) <= wasteGoal ? "var(--green)" : "var(--red)") +
+          '">' +
+          (cur.wasted || 0) +
+          "kg wasted (target: ≤" +
+          wasteGoal +
+          "kg)</span></div>" +
+          '<div class="progress-bar"><div class="progress-fill" style="width:' +
+          Math.min(
+            100,
+            Math.max(0, 100 - ((cur.wasted || 0) / wasteGoal) * 100),
+          ) +
+          "%;background:" +
+          ((cur.wasted || 0) <= wasteGoal ? "var(--green)" : "var(--red)") +
+          '"></div></div>' +
+          "</div>" +
+          '<div class="progress-section">' +
+          '<div class="progress-label"><span>📦 Inventory Items Tracked</span><span style="color:#5c7cfa">' +
+          activeInv.length +
+          " / " +
+          invGoal +
+          " items</span></div>" +
+          '<div class="progress-bar"><div class="progress-fill" style="width:' +
+          Math.min(100, (activeInv.length / invGoal) * 100) +
+          '%;background:#5c7cfa"></div></div>' +
+          "</div>";
 
-      document.getElementById("donut-legend").innerHTML = donutData.map(d =>
-        `<div class="donut-legend-item">
-          <div class="donut-dot" style="background:${d.color}"></div>
-          <span>${d.label}</span>
-          <span class="donut-val">${d.count}</span>
-        </div>`
-      ).join("") || `<div style="color:#aaa;font-size:13px;">No items.</div>`;
-
-      // ── 5. Waste Trend ────────────────────────────────────────
-      if (analytics.length === 0) {
-        document.getElementById("waste-trend").innerHTML =
-          `<div class="empty-analytics">No trend data yet.</div>`;
-      } else {
-        const maxWaste = Math.max(...analytics.map(r => r.wasted || 0), 0.1);
-        document.getElementById("waste-trend").innerHTML = analytics.map((r, idx) => {
-          const prev = analytics[idx - 1];
-          const change = prev ? r.wasted - prev.wasted : 0;
-          const arrow = change < 0 ? "↓" : change > 0 ? "↑" : "→";
-          const arrowColor = change < 0 ? "var(--green)" : change > 0 ? "var(--red)" : "#aaa";
-          const fillPct = Math.round(((r.wasted || 0) / maxWaste) * 100);
-          const barColor = r.wasted <= 1 ? "var(--green)" : r.wasted <= 2 ? "var(--amber)" : "var(--red)";
-          return `<div class="trend-row">
-            <div class="trend-month">${r.m}</div>
-            <div class="trend-bar-wrap">
-              <div class="trend-bar-fill" style="width:${fillPct}%;background:${barColor}"></div>
-            </div>
-            <div class="trend-val" style="color:${barColor}">${r.wasted}kg</div>
-            <div class="trend-arrow" style="color:${arrowColor}">${arrow}</div>
-          </div>`;
-        }).join("");
-      }
-
-      // ── 6. Donation Activity ──────────────────────────────────
-      const recentDonations = donations.slice(0, 6);
-      document.getElementById("donation-activity").innerHTML =
-        recentDonations.length === 0
-          ? `<div class="empty-dark">No donations listed yet.<br><a href="inventory.html" style="color:var(--amber)">Convert an item →</a></div>`
-          : recentDonations.map(d => `
-            <div class="donation-row">
-              <div class="donation-emoji">${d.emoji}</div>
-              <div style="flex:1">
-                <div class="donation-name">${d.name}</div>
-                <div class="donation-meta">${d.qty} · ${d.loc} · by ${d.donor}</div>
-              </div>
-              <span class="donation-badge ${d.claimed ? "badge-claimed" : "badge-available"}">
-                ${d.claimed ? "✅ Claimed" : "⏳ Available"}
-              </span>
-            </div>`).join("");
-
-      // ── 7. Weekly Meal Summary ────────────────────────────────
-      const dayOrder = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-      const mealRows = dayOrder
-        .filter(day => meals[day] && meals[day].length > 0)
-        .map(day => {
-          const dayMeals = meals[day];
-          const names = dayMeals.map(m => m.n || m.name).join(", ");
-          return `<div class="meal-summary-row">
-            <div class="meal-summary-day">${day}</div>
-            <div class="meal-summary-names">${names}</div>
-            <div class="meal-summary-count">${dayMeals.length} meal${dayMeals.length > 1 ? "s" : ""}</div>
-          </div>`;
-        }).join("");
-
-      const totalMealsPlanned = dayOrder.reduce((a, day) =>
-        a + (meals[day] ? meals[day].length : 0), 0);
-
-      document.getElementById("meal-summary").innerHTML =
-        mealRows
-          ? mealRows + `<div style="margin-top:14px;font-size:12px;color:#9ab5cc;text-align:right">${totalMealsPlanned} meals planned this week</div>`
-          : `<div class="empty-dark">No meals planned yet.<br><a href="meals.html" style="color:var(--amber)">Plan meals →</a></div>`;
-
-      // ── 8. Progress Goals ─────────────────────────────────────
-      const curMonthData = analytics[analytics.length - 1] || { saved: 0, wasted: 0, donated: 0 };
-      const savedGoal    = 10;
-      const donateGoal   = 5;
-      const wasteGoal    = 2;
-      const invGoal      = 10;
-
-      document.getElementById("progress-section").innerHTML = `
-        <div class="progress-section">
-          <div class="progress-label">
-            <span>🌿 Food Saved This Month</span>
-            <span style="color:var(--green)">${curMonthData.saved}kg / ${savedGoal}kg</span>
-          </div>
-          <div class="progress-bar">
-            <div class="progress-fill" style="width:${Math.min(100,(curMonthData.saved/savedGoal)*100)}%;background:var(--green)"></div>
-          </div>
-        </div>
-        <div class="progress-section">
-          <div class="progress-label">
-            <span>🤝 Donations This Month</span>
-            <span style="color:var(--amber)">${curMonthData.donated||0}kg / ${donateGoal}kg</span>
-          </div>
-          <div class="progress-bar">
-            <div class="progress-fill" style="width:${Math.min(100,((curMonthData.donated||0)/donateGoal)*100)}%;background:var(--amber)"></div>
-          </div>
-        </div>
-        <div class="progress-section">
-          <div class="progress-label">
-            <span>♻️ Waste Reduction Target</span>
-            <span style="color:${(curMonthData.wasted||0) <= wasteGoal ? "var(--green)" : "var(--red)"}">
-              ${curMonthData.wasted||0}kg wasted (target: ≤${wasteGoal}kg)
-            </span>
-          </div>
-          <div class="progress-bar">
-            <div class="progress-fill" style="width:${Math.min(100,Math.max(0,100-(((curMonthData.wasted||0)/wasteGoal)*100)))}%;background:${(curMonthData.wasted||0) <= wasteGoal ? "var(--green)" : "var(--red)"}"></div>
-          </div>
-        </div>
-        <div class="progress-section">
-          <div class="progress-label">
-            <span>📦 Inventory Items Tracked</span>
-            <span style="color:#5c7cfa">${activeInv.length} / ${invGoal} items</span>
-          </div>
-          <div class="progress-bar">
-            <div class="progress-fill" style="width:${Math.min(100,(activeInv.length/invGoal)*100)}%;background:#5c7cfa"></div>
-          </div>
-        </div>`;
+        // ── Init charts ───────────────────────────────────────────
+        renderMainChart();
+        renderCatBreakdown();
       }); // end SavePlate.ready.then
     </script>
   </body>
