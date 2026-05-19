@@ -16,7 +16,7 @@
           <div class="page-sub">Track your food-saving impact and progress</div>
         </div>
 
-        <!-- Period Filter -->
+        <!--Filter -->
         <div class="period-bar">
           <span class="period-label">View by:</span>
           <button
@@ -30,7 +30,7 @@
           </button>
         </div>
 
-        <!-- Impact Tiles -->
+        <!-- Tiles -->
         <div class="section-label">Overview</div>
         <div class="impact-grid" id="impact-grid"></div>
 
@@ -77,7 +77,7 @@
           </div>
         </div>
 
-        <!-- Row 2: Donut + Waste Trend -->
+        <!-- Row 2: Donut chart + Waste Trend -->
         <div class="analytics-grid">
           <div class="an-card">
             <div class="an-card-title">Expiry Status Breakdown</div>
@@ -198,7 +198,7 @@
             })
             .join("");
         } else {
-          // Weekly view - show weekly data
+          // show weekly data
           var weeklyData = _data.weeklyAnalytics || [];
           if (weeklyData[idx]) {
             var w = weeklyData[idx];
@@ -602,7 +602,7 @@
             ? Math.round(((totalSaved - totalWasted) / totalSaved) * 100)
             : 0;
 
-        // ── Impact Tiles ─────────────────────────────────────────
+        //tiles
         document.getElementById("impact-grid").innerHTML = [
           {
             num: totalSaved.toFixed(1) + "kg",
@@ -654,7 +654,7 @@
           })
           .join("");
 
-        // ── Donut ─────────────────────────────────────────────────
+        //donut
         var statusCounts = { danger: 0, warn: 0, ok: 0, used: 0, donated: 0 };
         allInv.forEach(function (i) {
           if (i.usedUp) statusCounts.used++;
@@ -744,7 +744,7 @@
             .join("") ||
           '<div style="color:#aaa;font-size:13px;">No items.</div>';
 
-        // ── Waste Trend ───────────────────────────────────────────
+        //Waste chart
         if (analytics.length === 0) {
           document.getElementById("waste-trend").innerHTML =
             '<div class="empty-analytics">No trend data yet.</div>';
@@ -802,7 +802,7 @@
             .join("");
         }
 
-        // ── Donation Activity ─────────────────────────────────────
+        // Donations
         document.getElementById("donation-activity").innerHTML =
           donations.length === 0
             ? '<div class="empty-dark">No donations listed yet.<br><a href="inventory.html" style="color:var(--amber)">Convert an item →</a></div>'
@@ -833,7 +833,7 @@
                 })
                 .join("");
 
-        // ── Weekly Meal Summary ───────────────────────────────────
+        // meal summary weekly
         var dayOrder = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
         var mealRows = dayOrder
           .filter(function (day) {
@@ -872,7 +872,7 @@
             " meals planned this week</div>"
           : '<div class="empty-dark">No meals planned yet.<br><a href="meals.html" style="color:var(--amber)">Plan meals →</a></div>';
 
-        // ── Progress Goals ────────────────────────────────────────
+        // progress goal
         var cur = analytics[analytics.length - 1] || {
           saved: 0,
           wasted: 0,
@@ -931,10 +931,9 @@
           '%;background:#5c7cfa"></div></div>' +
           "</div>";
 
-        // ── Init charts ───────────────────────────────────────────
         renderMainChart();
         renderCatBreakdown();
-      }); // end SavePlate.ready.then
+      });
     </script>
   </body>
 </html>

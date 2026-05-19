@@ -58,7 +58,7 @@
       </div>
     </div>
 
-    <!-- ADD MODAL -->
+    <!-- Add Item -->
     <div class="modal-overlay" id="modal">
       <div class="modal-box">
         <div class="modal-title">Add Food Item</div>
@@ -117,7 +117,7 @@
       </div>
     </div>
 
-    <!-- EDIT MODAL -->
+    <!-- edit -->
     <div class="modal-overlay" id="edit-modal">
       <div class="modal-box">
         <div class="modal-title">Edit Food Item</div>
@@ -176,7 +176,7 @@
       </div>
     </div>
 
-    <!-- CONVERT TO DONATION CONFIRM MODAL -->
+    <!-- convert to donation -->
     <div class="modal-overlay" id="donate-modal">
       <div class="modal-box" style="width: 360px">
         <div class="modal-title">🤝 List for Donation?</div>
@@ -347,7 +347,7 @@
           );
         };
 
-        // ── Edit ──────────────────────────────────────────────────────
+        // ── Edit ──
         window.openEditModal = function (id) {
           const inv = SavePlate.inventory;
           const item = inv.find((i) => i.id === id);
@@ -430,7 +430,7 @@
           });
 
         renderGrid();
-      }); // end SavePlate.ready.then
+      });
     </script>
   </body>
 </html>

@@ -29,7 +29,7 @@ body {
   min-height: 100vh;
 }
 
-/*sidebar*/
+/* ── sidebar ──*/
 .sidebar {
   width: 200px;
   min-height: 100vh;
@@ -1867,7 +1867,7 @@ body {
   color: #f5a623;
 }
 
-/* ── Layout ─────────────────────────────────────────────── */
+/* ── Layout ──*/
 .analytics-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1881,7 +1881,7 @@ body {
   margin-bottom: 22px;
 }
 
-/* ── Cards ──────────────────────────────────────────────── */
+/* ── Cards ──*/
 .an-card {
   background: #fff;
   border: 1px solid var(--border);
@@ -1908,7 +1908,7 @@ body {
   color: #9ab5cc;
 }
 
-/* ── Impact Tiles ───────────────────────────────────────── */
+/* ── Impact Tiles ──*/
 .impact-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -1936,7 +1936,7 @@ body {
   color: #9ab5cc;
 }
 
-/* ── Bar Chart ──────────────────────────────────────────── */
+/* ── Bar Chart ──*/
 .legend {
   display: flex;
   gap: 14px;
@@ -2011,7 +2011,7 @@ body {
   font-weight: 600;
 }
 
-/* ── Category Chart ─────────────────────────────────────── */
+/* ── Category Chart ──*/
 .cat-chart {
   display: flex;
   flex-direction: column;
@@ -2049,7 +2049,7 @@ body {
   flex-shrink: 0;
 }
 
-/* ── Progress Bars ──────────────────────────────────────── */
+/* ── Progress Bars ──*/
 .progress-section {
   margin-bottom: 16px;
 }
@@ -2075,7 +2075,7 @@ body {
   transition: width 0.6s ease;
 }
 
-/* ── Expiry Status Breakdown ────────────────────────────── */
+/* ── Expiry Status Breakdown ──*/
 .status-donut-wrap {
   display: flex;
   align-items: center;
@@ -2108,7 +2108,7 @@ body {
   color: var(--text);
 }
 
-/* ── Donation Activity ──────────────────────────────────── */
+/* ── Donation Activity ──*/
 .donation-row {
   display: flex;
   align-items: center;
@@ -2158,7 +2158,7 @@ body {
   color: #f5a623;
 }
 
-/* ── Meal Plan Summary ──────────────────────────────────── */
+/* ── Meal Plan Summary ──*/
 .meal-summary-row {
   display: flex;
   align-items: center;
@@ -2191,7 +2191,7 @@ body {
   flex-shrink: 0;
 }
 
-/* ── Waste Trend ─────────────────────────────────────────── */
+/* ── Waste Trend ──*/
 .trend-row {
   display: flex;
   align-items: center;
@@ -2235,7 +2235,7 @@ body {
   flex-shrink: 0;
 }
 
-/* ── Empty State ─────────────────────────────────────────── */
+/* ── Empty State ──*/
 .empty-analytics {
   text-align: center;
   color: #aaa;
@@ -2249,7 +2249,7 @@ body {
   font-size: 13px;
 }
 
-/* ── Section Divider ────────────────────────────────────── */
+/* ── Section Divider ──*/
 .section-label {
   font-size: 11px;
   font-weight: 700;
@@ -2262,110 +2262,146 @@ body {
 
 /* ── analyticsfilter ── */
 .period-bar {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 22px;
-        flex-wrap: wrap;
-      }
-      .period-label {
-        font-size: 13px;
-        font-weight: 600;
-        color: var(--text-muted);
-        margin-right: 4px;
-      }
-      .period-btn {
-        background: #fff;
-        border: 1.5px solid var(--border);
-        border-radius: 20px;
-        padding: 6px 18px;
-        font-size: 12px;
-        font-weight: 600;
-        color: var(--text-muted);
-        cursor: pointer;
-        font-family: "DM Sans", sans-serif;
-        transition: 0.15s;
-      }
-      .period-btn:hover {
-        background: #f0f4ff;
-        border-color: var(--navy);
-        color: var(--navy);
-      }
-      .period-btn.active {
-        background: var(--navy);
-        border-color: var(--navy);
-        color: #fff;
-      }
-      .cat-filter-row {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-        margin-bottom: 14px;
-      }
-      .cat-chip {
-        background: #f0f0f0;
-        border: 1.5px solid transparent;
-        border-radius: 16px;
-        padding: 4px 12px;
-        font-size: 12px;
-        font-weight: 600;
-        color: var(--text-muted);
-        cursor: pointer;
-        font-family: "DM Sans", sans-serif;
-        transition: 0.15s;
-      }
-      .cat-chip:hover {
-        background: #e8f0ff;
-        color: var(--navy);
-      }
-      .cat-chip.active {
-        background: var(--navy);
-        color: #fff;
-        border-color: var(--navy);
-      }
-      .bar-group {
-        cursor: pointer;
-      }
-      .bar-group:hover .bar {
-        opacity: 0.75;
-      }
-      .bar-selected {
-        outline: 2px solid rgba(44, 62, 80, 0.4);
-        outline-offset: 2px;
-      }
-      .month-detail {
-        display: none;
-        background: rgba(30, 50, 80, 0.05);
-        border: 1.5px solid var(--border);
-        border-radius: 10px;
-        padding: 14px 16px;
-        margin-top: 14px;
-        animation: fadeUp 0.2s;
-      }
-      .month-detail.open {
-        display: block;
-      }
-      .month-detail-title {
-        font-size: 13px;
-        font-weight: 700;
-        color: var(--text);
-        margin-bottom: 10px;
-      }
-      .month-detail-row {
-        display: flex;
-        justify-content: space-between;
-        font-size: 12px;
-        color: var(--text-muted);
-        padding: 5px 0;
-        border-bottom: 1px solid var(--border);
-      }
-      .month-detail-row:last-child {
-        border: none;
-      }
-      .month-detail-val {
-        font-weight: 700;
-        color: var(--text);
-      }
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+}
+.period-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-right: 4px;
+}
+.period-btn {
+  background: #fff;
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  padding: 6px 18px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: "DM Sans", sans-serif;
+  transition: 0.15s;
+}
+.period-btn:hover {
+  background: #f0f4ff;
+  border-color: var(--navy);
+  color: var(--navy);
+}
+.period-btn.active {
+  background: var(--navy);
+  border-color: var(--navy);
+  color: #fff;
+}
+.cat-filter-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.cat-chip {
+  background: #f0f0f0;
+  border: 1.5px solid transparent;
+  border-radius: 16px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: "DM Sans", sans-serif;
+  transition: 0.15s;
+}
+.cat-chip:hover {
+  background: #e8f0ff;
+  color: var(--navy);
+}
+.cat-chip.active {
+  background: var(--navy);
+  color: #fff;
+  border-color: var(--navy);
+}
+.bar-group {
+  cursor: pointer;
+}
+.bar-group:hover .bar {
+  opacity: 0.75;
+}
+.bar-selected {
+  outline: 2px solid rgba(44, 62, 80, 0.4);
+  outline-offset: 2px;
+}
+.month-detail {
+  display: none;
+  background: rgba(30, 50, 80, 0.05);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-top: 14px;
+  animation: fadeUp 0.2s;
+}
+.month-detail.open {
+  display: block;
+}
+.month-detail-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+.month-detail-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-muted);
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border);
+}
+.month-detail-row:last-child {
+  border: none;
+}
+.month-detail-val {
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* ── settings ── */
+.danger-zone {
+  background: #fff5f5;
+  border: 1px solid #ffd0d0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.change-pw-form {
+  display: none;
+  padding: 16px 18px;
+  border-top: 1px solid var(--border);
+  background: #fafafa;
+}
+.change-pw-form.open {
+  display: block;
+}
+.pw-input {
+  width: 100%;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 13px;
+  font-family: "DM Sans", sans-serif;
+  outline: none;
+  margin-bottom: 8px;
+}
+.pw-input:focus {
+  border-color: var(--navy);
+}
+.save-msg {
+  color: var(--green);
+  font-size: 12px;
+  display: none;
+  margin-top: 6px;
+}
 
 @keyframes fadeUp {
   from {

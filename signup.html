@@ -188,7 +188,7 @@
           await firebase.firestore().collection("users").doc(cred.user.uid).set({ name, twofa });
           location.href = "dashboard.html";
         } catch (e) {
-          let msg = "❌ Sign up failed.";
+          let msg = " Sign up failed.";
           if (e.code === "auth/email-already-in-use") {
             msg = "This email is already registered. Please log in instead.";
           } else if (e.code === "auth/invalid-email") {
@@ -196,7 +196,7 @@
           } else if (e.code === "auth/weak-password") {
             msg = "Password is too weak.";
           } else {
-            msg = "❌ " + (e.message || "Sign up failed.");
+            msg = " " + (e.message || "Sign up failed.");
           }
           errEl.textContent = msg;
           errEl.style.display = "block";

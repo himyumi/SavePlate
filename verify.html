@@ -249,11 +249,11 @@
                 twofa: pending.use2fa !== false,
               });
             } catch (e) {
-              let msg = "❌ Account creation failed.";
+              let msg = " Account creation failed.";
               if (e.code === "auth/email-already-in-use") msg = "This email is already registered.";
               else if (e.code === "auth/invalid-email") msg = "Invalid email address.";
               else if (e.code === "auth/weak-password") msg = "Password is too weak.";
-              else msg = "❌ " + (e.message || msg);
+              else msg = " " + (e.message || msg);
               errEl.textContent = msg;
               return;
             }
@@ -274,7 +274,7 @@
           }, 50);
           setTimeout(() => (location.href = "dashboard.html"), 2200);
         } else {
-          // ❌ Wrong code
+          // Wrong code
           attempts--;
           inputs.forEach((i) => i.classList.add("error"));
           setTimeout(
@@ -288,12 +288,12 @@
           inputs[0].focus();
 
           if (attempts > 0) {
-            errEl.textContent = `❌ Incorrect code. ${attempts} attempt${attempts !== 1 ? "s" : ""} remaining.`;
+            errEl.textContent = ` Incorrect code. ${attempts} attempt${attempts !== 1 ? "s" : ""} remaining.`;
             document.getElementById("attempts-left").textContent = "";
           } else {
             clearInterval(timerInterval);
             errEl.textContent =
-              "❌ Too many incorrect attempts. Please request a new code.";
+              " Too many incorrect attempts. Please request a new code.";
             inputs.forEach((i) => (i.disabled = true));
             document.getElementById("resend-btn").classList.add("visible");
           }
