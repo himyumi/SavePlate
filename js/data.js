@@ -194,7 +194,6 @@ const SavePlate = (() => {
       if (_uid) await db.collection("users").doc(_uid).set(_profile);
     },
 
-    /* ── FIX: clearUserData also deletes own donations ──────────── */
     async clearUserData() {
       if (!_uid) return;
       const userRef = db.collection("users").doc(_uid);
@@ -226,7 +225,7 @@ const SavePlate = (() => {
       clearCache();
     },
 
-    /* ── Inventory CRUD ──────────────────────────────────────── */
+    /* ── Inventory ──*/
     addInventoryItem(item) {
       const diff = (new Date(item.exp) - new Date()) / 86400000;
       item.status = diff <= 2 ? "danger" : diff <= 5 ? "warn" : "ok";
@@ -296,7 +295,6 @@ const SavePlate = (() => {
       }
     },
 
-    /* ── FIX: store donorUid so ownership check is uid-based ──── */
     convertToDonation(id) {
       const item = _cache.inventory.find((i) => i.id === id);
       if (!item) return;
@@ -319,7 +317,7 @@ const SavePlate = (() => {
           day: "numeric",
         }),
         donor: u.name || "You",
-        donorUid: _uid, // ← store uid for accurate ownership check
+        donorUid: _uid, // donation uid for each account
         claimed: false,
         claimedByUid: null,
       };
@@ -361,7 +359,7 @@ const SavePlate = (() => {
       }
     },
 
-    /* ── Donations ──────────────────────────────────────────────── */
+    /* ── Donation ── */
     claimDonation(id) {
       const d = _cache.donations.find((x) => x.id === id);
       if (d && !d.claimed) {
@@ -379,7 +377,7 @@ const SavePlate = (() => {
       return false;
     },
 
-    /* ── Meals ──────────────────────────────────────────────────── */
+    /* ── Meal ──*/
     addMeal(dateKey, mealObj) {
       if (!_cache.meals[dateKey]) _cache.meals[dateKey] = [];
       _cache.meals[dateKey].push(mealObj);
@@ -392,7 +390,7 @@ const SavePlate = (() => {
       }
     },
 
-    /* ── Notifications ──────────────────────────────────────────── */
+    /* ── Notification ──*/
     _addNotif(icon, title, body, type) {
       const notif = {
         id: nextId(),
@@ -438,7 +436,7 @@ const SavePlate = (() => {
       return _cache.notifications.filter((n) => !n.read).length;
     },
 
-    /* ── Analytics ──────────────────────────────────────────────── */
+    /* ── Analytics ──*/
     _updateAnalytics(field, amount) {
       const months = [
         "Jan",
@@ -469,7 +467,7 @@ const SavePlate = (() => {
           .set(row);
     },
 
-    /* ── Render helpers ─────────────────────────────────────────── */
+    /* ── Render helpers ──*/
     renderSidebar(active) {
       const links = [
         { id: "dashboard", label: "Dashboard", href: "dashboard.html" },

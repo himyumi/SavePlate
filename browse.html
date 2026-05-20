@@ -36,14 +36,13 @@
             id="loc-filter"
             onchange="filterLoc(this.value)"
           >
-            <option value="">📍 All Locations</option>
+            <option value="">All Locations</option>
             <option>Kuala Lumpur</option>
-            <option>Petaling Jaya</option>
-            <option>Subang Jaya</option>
-            <option>Cheras</option>
-            <option>Kepong</option>
-            <option>Ampang</option>
-            <option>My Location</option>
+            <option>Denpasar</option>
+            <option>Jakarta</option>
+            <option>Surabaya</option>
+            <option>Singapore</option>
+            <option>malacca</option>
           </select>
           <select
             class="cat-select"
@@ -62,7 +61,7 @@
     <!-- Claim confirmation -->
     <div class="modal-overlay" id="claim-modal">
       <div class="modal-box" style="width: 360px">
-        <div class="modal-title">🤝 Claim Donation?</div>
+        <div class="modal-title">Claim Donation?</div>
         <p
           style="font-size: 14px; color: #555; margin-bottom: 8px"
           id="claim-msg"
@@ -127,16 +126,15 @@
 
           if (data.length === 0) {
             document.getElementById("grid").innerHTML =
-              `<div class="empty-state">😕 No donations found matching your filters.</div>`;
+              `<div class="empty-state">No donations found matching your filters.</div>`;
             return;
           }
 
           document.getElementById("grid").innerHTML = data
             .map((d) => {
-              // FIX: own listing = donorUid matches current user's uid only
               const isOwn = currentUid && d.donorUid === currentUid;
               return `<div class="donate-card ${d.claimed ? "claimed-card" : ""}">
-                ${d.claimed ? `<span class="claimed-ribbon">✅ Claimed</span>` : ""}
+                ${d.claimed ? `<span class="claimed-ribbon">Claimed</span>` : ""}
                 ${isOwn && !d.claimed ? `<span class="my-donation-tag">Your listing</span>` : ""}
                 <span class="dc-emoji">${d.emoji}</span>
                 <div class="dc-name">${d.name}</div>
