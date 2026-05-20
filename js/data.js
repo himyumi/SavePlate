@@ -23,282 +23,6 @@ const SavePlate = (() => {
     settings: { twofa: true, emailAlerts: true, notifs: true, darkMode: false },
   };
 
-  /* ── seed data (only written on first-ever login for a user) ──── */
-  const SEED_INVENTORY = [
-    {
-      id: 1,
-      name: "Fresh Milk",
-      emoji: "🥛",
-      cat: "Dairy",
-      qty: "1 Liter",
-      loc: "Fridge",
-      exp: futureDate(1),
-      status: "danger",
-      usedUp: false,
-      donated: false,
-    },
-    {
-      id: 2,
-      name: "Greek Yogurt",
-      emoji: "🥛",
-      cat: "Dairy",
-      qty: "500g",
-      loc: "Fridge",
-      exp: futureDate(3),
-      status: "warn",
-      usedUp: false,
-      donated: false,
-    },
-    {
-      id: 3,
-      name: "Apple",
-      emoji: "🍎",
-      cat: "Fruits",
-      qty: "500g",
-      loc: "Fridge",
-      exp: futureDate(10),
-      status: "ok",
-      usedUp: false,
-      donated: false,
-    },
-    {
-      id: 4,
-      name: "Chicken Thigh",
-      emoji: "🍗",
-      cat: "Meat",
-      qty: "800g",
-      loc: "Freezer",
-      exp: futureDate(7),
-      status: "ok",
-      usedUp: false,
-      donated: false,
-    },
-    {
-      id: 5,
-      name: "Broccoli",
-      emoji: "🥦",
-      cat: "Vegetables",
-      qty: "300g",
-      loc: "Fridge",
-      exp: futureDate(4),
-      status: "warn",
-      usedUp: false,
-      donated: false,
-    },
-    {
-      id: 6,
-      name: "Basmati Rice",
-      emoji: "🌾",
-      cat: "Grains",
-      qty: "2kg",
-      loc: "Pantry",
-      exp: futureDate(180),
-      status: "ok",
-      usedUp: false,
-      donated: false,
-    },
-    {
-      id: 7,
-      name: "Eggs",
-      emoji: "🥚",
-      cat: "Dairy",
-      qty: "12 pcs",
-      loc: "Fridge",
-      exp: futureDate(14),
-      status: "ok",
-      usedUp: false,
-      donated: false,
-    },
-  ];
-
-  const SEED_DONATIONS = [
-    {
-      id: 101,
-      emoji: "🌾",
-      name: "Basmati Rice",
-      qty: "1kg",
-      loc: "Petaling Jaya",
-      exp: "Jan 2027",
-      donor: "Ahmad",
-      claimed: false,
-    },
-    {
-      id: 102,
-      emoji: "🥕",
-      name: "Carrots",
-      qty: "500g",
-      loc: "Kuala Lumpur",
-      exp: "Apr 27",
-      donor: "Siti",
-      claimed: false,
-    },
-    {
-      id: 103,
-      emoji: "🥫",
-      name: "Sardines (canned)",
-      qty: "3 tins",
-      loc: "Subang Jaya",
-      exp: "Mar 2027",
-      donor: "Chen",
-      claimed: false,
-    },
-    {
-      id: 104,
-      emoji: "🧅",
-      name: "Onions",
-      qty: "1kg",
-      loc: "Cheras",
-      exp: "Apr 20",
-      donor: "Ravi",
-      claimed: false,
-    },
-    {
-      id: 105,
-      emoji: "🍚",
-      name: "White Rice",
-      qty: "3kg",
-      loc: "Kepong",
-      exp: "Dec 2026",
-      donor: "Aishah",
-      claimed: false,
-    },
-    {
-      id: 106,
-      emoji: "🥜",
-      name: "Peanut Butter",
-      qty: "1 jar",
-      loc: "Ampang",
-      exp: "Sep 2026",
-      donor: "Lee",
-      claimed: false,
-    },
-  ];
-
-  const SEED_MEALS = {
-    Mon: [
-      { t: "Breakfast", n: "Egg Toast", ingredients: "Eggs, Bread", notes: "" },
-      {
-        t: "Lunch",
-        n: "Fried Rice",
-        ingredients: "Rice, Eggs, Vegetables",
-        notes: "",
-      },
-      {
-        t: "Dinner",
-        n: "Chicken Stir-fry",
-        ingredients: "Chicken Thigh, Broccoli",
-        notes: "",
-      },
-    ],
-    Tue: [
-      {
-        t: "Breakfast",
-        n: "Greek Yogurt Parfait",
-        ingredients: "Greek Yogurt, Apple",
-        notes: "",
-      },
-      { t: "Lunch", n: "Nasi Lemak", ingredients: "Rice, Eggs", notes: "" },
-    ],
-    Wed: [
-      { t: "Lunch", n: "Pasta", ingredients: "Pasta, Tomatoes", notes: "" },
-      {
-        t: "Dinner",
-        n: "Tomato Soup",
-        ingredients: "Tomatoes, Onions",
-        notes: "",
-      },
-    ],
-    Thu: [
-      {
-        t: "Breakfast",
-        n: "Toast & Eggs",
-        ingredients: "Eggs, Bread",
-        notes: "",
-      },
-    ],
-    Fri: [
-      {
-        t: "Lunch",
-        n: "Chicken Rice",
-        ingredients: "Chicken Thigh, Rice",
-        notes: "",
-      },
-      {
-        t: "Dinner",
-        n: "Salad Bowl",
-        ingredients: "Vegetables, Broccoli",
-        notes: "",
-      },
-    ],
-    Sat: [
-      {
-        t: "Breakfast",
-        n: "Strawberry Smoothie",
-        ingredients: "Milk, Strawberries",
-        notes: "",
-      },
-      { t: "Dinner", n: "BBQ Night", ingredients: "Chicken Thigh", notes: "" },
-    ],
-    Sun: [
-      { t: "Lunch", n: "Family Nasi", ingredients: "Rice, Chicken", notes: "" },
-    ],
-  };
-
-  const SEED_NOTIFICATIONS = [
-    {
-      id: 1,
-      type: "danger",
-      icon: "⚠️",
-      title: "Expiry Alert: Fresh Milk",
-      body: "Your Fresh Milk (1L) expires tomorrow. Use it or consider donating.",
-      time: "2 hours ago",
-      read: false,
-    },
-    {
-      id: 2,
-      type: "success",
-      icon: "✅",
-      title: "Donation Claimed",
-      body: "Your donated Basmati Rice has been claimed. Arrange pickup by tomorrow.",
-      time: "5 hours ago",
-      read: false,
-    },
-    {
-      id: 3,
-      type: "",
-      icon: "🍽️",
-      title: "Meal Plan Reminder",
-      body: "You haven't planned meals for the weekend. Use your Broccoli and Eggs soon.",
-      time: "Yesterday",
-      read: false,
-    },
-    {
-      id: 4,
-      type: "",
-      icon: "🔒",
-      title: "Security: New Login Detected",
-      body: "A new login was detected. Change your password if it wasn't you.",
-      time: "2 days ago",
-      read: true,
-    },
-    {
-      id: 5,
-      type: "success",
-      icon: "🌿",
-      title: "Monthly Achievement Unlocked!",
-      body: "You saved 7.2kg of food this month. You're in the top 20% of SavePlate users!",
-      time: "3 days ago",
-      read: true,
-    },
-  ];
-
-  const SEED_ANALYTICS = [
-    { m: "Jan", saved: 5.2, wasted: 2.1, donated: 1.0 },
-    { m: "Feb", saved: 6.8, wasted: 1.4, donated: 2.2 },
-    { m: "Mar", saved: 4.5, wasted: 3.2, donated: 0.8 },
-    { m: "Apr", saved: 7.2, wasted: 0.8, donated: 3.1 },
-  ];
-
   /* ── utility ──────────────────────────────────────────────────── */
   function futureDate(days) {
     const d = new Date();
@@ -332,67 +56,30 @@ const SavePlate = (() => {
         db.collection("donations").get(),
       ]);
 
-    if (invSnap.empty) {
-      await seedSubcollection(userRef.collection("inventory"), SEED_INVENTORY);
-      _cache.inventory = [...SEED_INVENTORY];
-    } else {
-      _cache.inventory = invSnap.docs.map((d) => d.data());
-    }
+    // Inventory — start empty, no seed data
+    _cache.inventory = invSnap.docs.map((d) => d.data());
 
-    if (notifSnap.empty) {
-      await seedSubcollection(
-        userRef.collection("notifications"),
-        SEED_NOTIFICATIONS,
-      );
-      _cache.notifications = [...SEED_NOTIFICATIONS];
-    } else {
-      _cache.notifications = notifSnap.docs.map((d) => d.data());
-    }
+    // Notifications — start empty
+    _cache.notifications = notifSnap.docs.map((d) => d.data());
 
-    if (analySnap.empty) {
-      await Promise.all(
-        SEED_ANALYTICS.map((a) =>
-          userRef.collection("analytics").doc(a.m).set(a),
-        ),
-      );
-      _cache.analytics = [...SEED_ANALYTICS];
-    } else {
-      _cache.analytics = analySnap.docs.map((d) => d.data());
-    }
+    // Analytics — start empty
+    _cache.analytics = analySnap.docs.map((d) => d.data());
 
+    // Meals — start empty
+    _cache.meals = mealsSnap.exists ? mealsSnap.data().data || {} : {};
     if (!mealsSnap.exists) {
-      await userRef.collection("data").doc("meals").set({ data: SEED_MEALS });
-      _cache.meals = { ...SEED_MEALS };
-    } else {
-      _cache.meals = mealsSnap.data().data || {};
+      await userRef.collection("data").doc("meals").set({ data: {} });
     }
 
+    // Settings
     if (!settingsSnap.exists) {
       await userRef.collection("data").doc("settings").set(_cache.settings);
     } else {
       _cache.settings = settingsSnap.data();
     }
 
-    if (donSnap.empty) {
-      await seedDonations();
-    } else {
-      _cache.donations = donSnap.docs.map((d) => d.data());
-    }
-  }
-
-  async function seedSubcollection(ref, seedArr) {
-    await Promise.all(
-      seedArr.map((item) => ref.doc(String(item.id)).set(item)),
-    );
-  }
-
-  async function seedDonations() {
-    await Promise.all(
-      SEED_DONATIONS.map((d) =>
-        db.collection("donations").doc(String(d.id)).set(d),
-      ),
-    );
-    _cache.donations = [...SEED_DONATIONS];
+    // Donations — global collection, load all
+    _cache.donations = donSnap.docs.map((d) => d.data());
   }
 
   function clearCache() {
@@ -486,6 +173,7 @@ const SavePlate = (() => {
       return {
         name: _profile.name || u.email.split("@")[0],
         email: u.email,
+        uid: u.uid,
         twofa: !!_profile.twofa,
       };
     },
@@ -506,9 +194,12 @@ const SavePlate = (() => {
       if (_uid) await db.collection("users").doc(_uid).set(_profile);
     },
 
+    /* ── FIX: clearUserData also deletes own donations ──────────── */
     async clearUserData() {
       if (!_uid) return;
       const userRef = db.collection("users").doc(_uid);
+
+      // Delete user subcollections
       const subs = ["inventory", "notifications", "analytics"];
       for (const sub of subs) {
         const snap = await userRef.collection(sub).get();
@@ -524,6 +215,14 @@ const SavePlate = (() => {
         .doc("settings")
         .delete()
         .catch(() => {});
+
+      // Delete this user's donations from global donations collection
+      const donSnap = await db
+        .collection("donations")
+        .where("donorUid", "==", _uid)
+        .get();
+      await Promise.all(donSnap.docs.map((d) => d.ref.delete()));
+
       clearCache();
     },
 
@@ -549,20 +248,14 @@ const SavePlate = (() => {
       );
       this._updateAnalytics("saved", 0.1);
     },
-    // Add this after addInventoryItem in the return object
     updateInventoryItem(id, updates) {
       const item = _cache.inventory.find((i) => i.id === id);
       if (item) {
-        // Apply updates to the cached item
         Object.assign(item, updates);
-
-        // Update status based on expiry if it changed
         if (updates.exp) {
           const diff = (new Date(item.exp) - new Date()) / 86400000;
           item.status = diff <= 2 ? "danger" : diff <= 5 ? "warn" : "ok";
         }
-
-        // Save to Firestore
         if (_uid) {
           db.collection("users")
             .doc(_uid)
@@ -602,6 +295,8 @@ const SavePlate = (() => {
         this._updateAnalytics("saved", 0.3);
       }
     },
+
+    /* ── FIX: store donorUid so ownership check is uid-based ──── */
     convertToDonation(id) {
       const item = _cache.inventory.find((i) => i.id === id);
       if (!item) return;
@@ -624,8 +319,9 @@ const SavePlate = (() => {
           day: "numeric",
         }),
         donor: u.name || "You",
+        donorUid: _uid, // ← store uid for accurate ownership check
         claimed: false,
-        fromInventory: true,
+        claimedByUid: null,
       };
       _cache.donations.unshift(donation);
       db.collection("donations").doc(String(donation.id)).set(donation);
@@ -670,6 +366,7 @@ const SavePlate = (() => {
       const d = _cache.donations.find((x) => x.id === id);
       if (d && !d.claimed) {
         d.claimed = true;
+        d.claimedByUid = _uid;
         db.collection("donations").doc(String(id)).set(d);
         this._addNotif(
           "✅",
