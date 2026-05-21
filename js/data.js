@@ -364,19 +364,16 @@ const SavePlate = (() => {
 
       const u = this.user || {};
 
-      // Mark claimed & store claimer info
       d.claimed = true;
       d.claimedByUid = _uid;
       d.claimedByName = u.name || "Someone";
       d.claimedByEmail = u.email || "";
 
-      // Remove from global donations collection in Firestore
       await db.collection("donations").doc(String(id)).delete();
 
-      // Remove from local cache
       _cache.donations = _cache.donations.filter((x) => x.id !== id);
 
-      // Notify claimer (current user)
+      // Notify claim
       this._addNotif(
         "✅",
         "Donation Claimed!",
@@ -384,7 +381,7 @@ const SavePlate = (() => {
         "success",
       );
 
-      // Notify donor (write directly to their notifications subcollection)
+      // Notify dono
       if (d.donorUid && d.donorUid !== _uid) {
         const donorNotif = {
           id: nextId(),
