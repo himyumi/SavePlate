@@ -51,7 +51,6 @@
           >
             <option value="">All Items</option>
             <option value="available">Available Only</option>
-            <option value="claimed">Claimed</option>
           </select>
         </div>
         <div class="donate-grid" id="grid"></div>
@@ -60,7 +59,7 @@
 
     <!-- Claim confirmation -->
     <div class="modal-overlay" id="claim-modal">
-      <div class="modal-box" style="width: 360px">
+      <div class="modal-box" style="width: 380px">
         <div class="modal-title">Claim Donation?</div>
         <p
           style="font-size: 14px; color: #555; margin-bottom: 8px"
@@ -68,8 +67,35 @@
         >
           You are about to claim this item.
         </p>
+        <div
+          id="claim-contact-info"
+          style="
+            background: #f0f6ff;
+            border-radius: 10px;
+            padding: 12px 14px;
+            margin-bottom: 16px;
+            font-size: 13px;
+            display: none;
+          "
+        >
+          <div style="font-weight: 700; color: #1a2e4a; margin-bottom: 8px">
+            📋 Donor Contact Info
+          </div>
+          <div
+            id="claim-donor-name"
+            style="margin-bottom: 4px; color: #444"
+          ></div>
+          <div
+            id="claim-donor-email"
+            style="margin-bottom: 4px; color: #5a8fc2"
+          ></div>
+          <div id="claim-donor-loc" style="color: #888"></div>
+          <div style="margin-top: 8px; font-size: 11px; color: #aaa">
+            Use this info to arrange pickup after claiming.
+          </div>
+        </div>
         <p style="font-size: 12px; color: #aaa; margin-bottom: 20px">
-          The donor will be notified to arrange pickup.
+          The donor will be notified to arrange pickup with you.
         </p>
         <div class="modal-actions">
           <button class="btn-cancel" onclick="closeClaimModal()">Cancel</button>
@@ -110,6 +136,7 @@
             const matchQ =
               !searchQ || d.name.toLowerCase().includes(searchQ.toLowerCase());
             const matchLoc = !locFilter || d.loc === locFilter;
+            // Only show unclaimed items (claimed ones are removed from cache after claiming)
             const matchA =
               !availFilter ||
               (availFilter === "available" && !d.claimed) ||
@@ -142,6 +169,7 @@
                 <div class="dc-row">📍 ${d.loc}</div>
                 <div class="dc-row">⏰ Expires: ${d.exp}</div>
                 <div class="dc-row">👤 From: ${d.donor}</div>
+                ${d.donorEmail ? `<div class="dc-row" style="color:#5a8fc2;font-size:12px;">✉️ ${d.donorEmail}</div>` : ""}
                 ${
                   !d.claimed && !isOwn
                     ? `<button class="dc-btn" onclick="openClaimModal(${d.id},'${d.name.replace(/'/g, "\\'")}')">Request / Claim</button>`
@@ -171,14 +199,41 @@
           pendingClaimId = id;
           document.getElementById("claim-msg").textContent =
             `You are about to claim "${name}".`;
+          // Populate donor contact info
+          const donation = SavePlate.donations.find((d) => d.id === id);
+          const contactEl = document.getElementById("claim-contact-info");
+          if (donation && (donation.donorEmail || donation.donorLocation)) {
+            document.getElementById("claim-donor-name").textContent =
+              `👤 ${donation.donor || "Anonymous"}`;
+            document.getElementById("claim-donor-email").textContent =
+              donation.donorEmail ? `✉️ ${donation.donorEmail}` : "";
+            document.getElementById("claim-donor-loc").textContent =
+              donation.donorLocation
+                ? `📍 ${donation.donorLocation}`
+                : donation.loc
+                  ? `📍 ${donation.loc}`
+                  : "";
+            contactEl.style.display = "block";
+          } else {
+            contactEl.style.display = "none";
+          }
           document.getElementById("claim-modal").classList.add("open");
         };
         window.closeClaimModal = function () {
           document.getElementById("claim-modal").classList.remove("open");
         };
-        window.confirmClaim = function () {
-          const ok = SavePlate.claimDonation(pendingClaimId);
+        window.confirmClaim = async function () {
+          const btn = document.querySelector("#claim-modal .btn-navy");
+          if (btn) {
+            btn.textContent = "Claiming…";
+            btn.disabled = true;
+          }
+          const ok = await SavePlate.claimDonation(pendingClaimId);
           closeClaimModal();
+          if (btn) {
+            btn.textContent = "Claim It!";
+            btn.disabled = false;
+          }
           if (ok) render();
         };
 
