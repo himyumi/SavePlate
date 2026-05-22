@@ -19,6 +19,60 @@
           <div>
             <div class="profile-bn" id="pname">User</div>
             <div class="profile-be" id="pemail">user@email.com</div>
+            <div style="font-size: 12px; color: #9ab5cc; margin-top: 2px">
+              📍 <span id="plocation">No location set</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-label">Profile</div>
+          <div class="settings-card">
+            <div
+              class="settings-row"
+              style="flex-direction: column; align-items: flex-start; gap: 10px"
+            >
+              <span class="settings-row-lbl">📍 Your City / Location</span>
+              <div
+                style="
+                  display: flex;
+                  gap: 10px;
+                  width: 100%;
+                  align-items: center;
+                "
+              >
+                <input
+                  id="location-input"
+                  type="text"
+                  placeholder="e.g. Jakarta, Surabaya, Singapore..."
+                  style="
+                    flex: 1;
+                    padding: 9px 13px;
+                    border: 1.5px solid #dde4ee;
+                    border-radius: 10px;
+                    font-size: 14px;
+                    outline: none;
+                    font-family: inherit;
+                  "
+                  oninput="
+                    document.getElementById('loc-save-msg').style.display =
+                      'none'
+                  "
+                />
+                <button
+                  class="btn-navy"
+                  style="width: auto; padding: 9px 18px; white-space: nowrap"
+                  onclick="saveLocation()"
+                >
+                  Save
+                </button>
+              </div>
+              <div style="font-size: 12px; color: #aaa">
+                This city will appear on your donation listings so others can
+                find items near them.
+              </div>
+              <div class="save-msg" id="loc-save-msg"></div>
+            </div>
           </div>
         </div>
 
@@ -117,87 +171,125 @@
     <script src="js/data.js"></script>
     <script>
       SavePlate.ready.then(function () {
-      SavePlate.guardAuth();
-      document.getElementById("sidebar-root").innerHTML =
-        SavePlate.renderSidebar("settings");
-      document.getElementById("topbar-root").innerHTML =
-        SavePlate.renderTopbar("Settings");
-      document.getElementById("pname").textContent = SavePlate.user.name;
-      document.getElementById("pemail").textContent = SavePlate.user.email;
+        SavePlate.guardAuth();
+        document.getElementById("sidebar-root").innerHTML =
+          SavePlate.renderSidebar("settings");
+        document.getElementById("topbar-root").innerHTML =
+          SavePlate.renderTopbar("Settings");
+        document.getElementById("pname").textContent = SavePlate.user.name;
+        document.getElementById("pemail").textContent = SavePlate.user.email;
+        const userLoc = SavePlate.user.location || "";
+        document.getElementById("plocation").textContent =
+          userLoc || "No location set";
+        document.getElementById("location-input").value = userLoc;
 
-      const s = SavePlate.settings;
-      ["twofa", "notifs", "darkMode"].forEach((key) => {
-        const el = document.getElementById("t-" + key);
-        if (el && s[key]) el.classList.add("on");
-      });
-
-      window.toggleSetting = function (key, el) {
-        el.classList.toggle("on");
-        const s = SavePlate.settings;
-        s[key] = el.classList.contains("on");
-        SavePlate.settings = s;
-        if (key === "twofa") {
-          SavePlate.saveProfile(SavePlate.user.name, s.twofa);
-        }
-      };
-
-      window.changePassword = async function () {
-        const curr = document.getElementById("pw-current").value.trim();
-        const newPw = document.getElementById("pw-new").value.trim();
-        const confirmPw = document.getElementById("pw-confirm").value.trim();
-        const msgEl = document.getElementById("pw-msg");
-        if (!curr || !newPw || !confirmPw) {
-          msgEl.style.color = "var(--red)";
-          msgEl.textContent = "Please fill all fields.";
-          msgEl.style.display = "block";
-          return;
-        }
-        if (newPw !== confirmPw) {
-          msgEl.style.color = "var(--red)";
-          msgEl.textContent = "Passwords do not match.";
-          msgEl.style.display = "block";
-          return;
-        }
-        if (newPw.length < 6) {
-          msgEl.style.color = "var(--red)";
-          msgEl.textContent = "Password must be at least 6 characters.";
-          msgEl.style.display = "block";
-          return;
-        }
-        try {
-          const user = firebase.auth().currentUser;
-          const credential = firebase.auth.EmailAuthProvider.credential(user.email, curr);
-          await user.reauthenticateWithCredential(credential);
-          await user.updatePassword(newPw);
-          msgEl.style.color = "var(--green)";
-          msgEl.textContent = "✅ Password updated successfully!";
-          msgEl.style.display = "block";
-          ["pw-current", "pw-new", "pw-confirm"].forEach(
-            (id) => (document.getElementById(id).value = ""),
+        window.saveLocation = async function () {
+          const loc = document.getElementById("location-input").value.trim();
+          const msgEl = document.getElementById("loc-save-msg");
+          await SavePlate.saveProfile(
+            SavePlate.user.name,
+            SavePlate.user.twofa,
+            loc,
           );
-        } catch (e) {
-          msgEl.style.color = "var(--red)";
-          if (e.code === "auth/wrong-password" || e.code === "auth/invalid-credential") {
-            msgEl.textContent = "❌ Current password is incorrect.";
-          } else {
-            msgEl.textContent = "❌ " + (e.message || "Failed to update password.");
-          }
+          document.getElementById("plocation").textContent =
+            loc || "No location set";
+          msgEl.style.color = "var(--green)";
+          msgEl.textContent = "Location saved!";
           msgEl.style.display = "block";
-        }
-      };
+          setTimeout(() => {
+            msgEl.style.display = "none";
+          }, 3000);
+        };
 
-      window.clearData = async function () {
-        if (!confirm("This will clear all your inventory, meals, and donation data. Are you sure?")) return;
-        await SavePlate.clearUserData();
-        alert("Data cleared. The app will reload with fresh data.");
-        location.reload();
-      };
-
-      window.logout = function () {
-        SavePlate.clearUser().then(() => {
-          location.href = "index.html";
+        const s = SavePlate.settings;
+        ["twofa", "notifs", "darkMode"].forEach((key) => {
+          const el = document.getElementById("t-" + key);
+          if (el && s[key]) el.classList.add("on");
         });
-      };
+
+        window.toggleSetting = function (key, el) {
+          el.classList.toggle("on");
+          const s = SavePlate.settings;
+          s[key] = el.classList.contains("on");
+          SavePlate.settings = s;
+          if (key === "twofa") {
+            SavePlate.saveProfile(
+              SavePlate.user.name,
+              s.twofa,
+              SavePlate.user.location,
+            );
+          }
+        };
+
+        window.changePassword = async function () {
+          const curr = document.getElementById("pw-current").value.trim();
+          const newPw = document.getElementById("pw-new").value.trim();
+          const confirmPw = document.getElementById("pw-confirm").value.trim();
+          const msgEl = document.getElementById("pw-msg");
+          if (!curr || !newPw || !confirmPw) {
+            msgEl.style.color = "var(--red)";
+            msgEl.textContent = "Please fill all fields.";
+            msgEl.style.display = "block";
+            return;
+          }
+          if (newPw !== confirmPw) {
+            msgEl.style.color = "var(--red)";
+            msgEl.textContent = "Passwords do not match.";
+            msgEl.style.display = "block";
+            return;
+          }
+          if (newPw.length < 6) {
+            msgEl.style.color = "var(--red)";
+            msgEl.textContent = "Password must be at least 6 characters.";
+            msgEl.style.display = "block";
+            return;
+          }
+          try {
+            const user = firebase.auth().currentUser;
+            const credential = firebase.auth.EmailAuthProvider.credential(
+              user.email,
+              curr,
+            );
+            await user.reauthenticateWithCredential(credential);
+            await user.updatePassword(newPw);
+            msgEl.style.color = "var(--green)";
+            msgEl.textContent = "Password updated successfully!";
+            msgEl.style.display = "block";
+            ["pw-current", "pw-new", "pw-confirm"].forEach(
+              (id) => (document.getElementById(id).value = ""),
+            );
+          } catch (e) {
+            msgEl.style.color = "var(--red)";
+            if (
+              e.code === "auth/wrong-password" ||
+              e.code === "auth/invalid-credential"
+            ) {
+              msgEl.textContent = "Current password is incorrect.";
+            } else {
+              msgEl.textContent =
+                " " + (e.message || "Failed to update password.");
+            }
+            msgEl.style.display = "block";
+          }
+        };
+
+        window.clearData = async function () {
+          if (
+            !confirm(
+              "This will clear all your inventory, meals, and donation data. Are you sure?",
+            )
+          )
+            return;
+          await SavePlate.clearUserData();
+          alert("Data cleared. The app will reload with fresh data.");
+          location.reload();
+        };
+
+        window.logout = function () {
+          SavePlate.clearUser().then(() => {
+            location.href = "index.html";
+          });
+        };
       }); // end SavePlate.ready.then
     </script>
   </body>

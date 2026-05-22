@@ -1,18 +1,10 @@
-/* ================================================================
-   SavePlate – data.js  (Firebase Auth + Firestore backend)
-   ================================================================
-   Loads user data from Firestore into an in-memory cache on page load.
-   All synchronous SavePlate.* getters read from cache.
-   Writes go to both the cache and Firestore.
-   Pages must wait for SavePlate.ready before accessing data.
-   ================================================================ */
 
 const SavePlate = (() => {
   const auth = firebase.auth();
   const db = firebase.firestore();
 
   let _uid = null;
-  let _profile = { name: "", twofa: false };
+  let _profile = { name: "", twofa: false, location: "" };
 
   const _cache = {
     inventory: [],
@@ -40,10 +32,11 @@ const SavePlate = (() => {
 
     const profileSnap = await userRef.get();
     if (!profileSnap.exists) {
-      _profile = { name: user.email.split("@")[0], twofa: false };
+      _profile = { name: user.email.split("@")[0], twofa: false, location: "" };
       await userRef.set(_profile);
     } else {
       _profile = profileSnap.data();
+      if (!_profile.location) _profile.location = "";
     }
 
     const [invSnap, notifSnap, analySnap, mealsSnap, settingsSnap, donSnap] =
@@ -175,6 +168,7 @@ const SavePlate = (() => {
         email: u.email,
         uid: u.uid,
         twofa: !!_profile.twofa,
+        location: _profile.location || "",
       };
     },
 
@@ -189,8 +183,8 @@ const SavePlate = (() => {
       if (!auth.currentUser) window.location.href = "index.html";
     },
 
-    async saveProfile(name, twofa) {
-      _profile = { name, twofa: !!twofa };
+    async saveProfile(name, twofa, location) {
+      _profile = { ..._profile, name, twofa: !!twofa, location: location || "" };
       if (_uid) await db.collection("users").doc(_uid).set(_profile);
     },
 
@@ -311,22 +305,26 @@ const SavePlate = (() => {
         emoji: item.emoji,
         name: item.name,
         qty: item.qty,
-        loc: "My Location",
+        loc: (_profile.location && _profile.location.trim()) ? _profile.location.trim() : "Unknown Location",
         exp: new Date(item.exp).toLocaleDateString("en-US", {
           month: "short",
           day: "numeric",
         }),
-        donor: u.name || "You",
-        donorUid: _uid, // donation uid for each account
+        donor: u.name || "Anonymous",
+        donorUid: _uid,
+        donorEmail: u.email || "",
+        donorLocation: (_profile.location && _profile.location.trim()) ? _profile.location.trim() : "Unknown Location",
         claimed: false,
         claimedByUid: null,
+        claimedByName: null,
+        claimedByEmail: null,
       };
       _cache.donations.unshift(donation);
       db.collection("donations").doc(String(donation.id)).set(donation);
       this._addNotif(
         "🤝",
         "Item Listed for Donation",
-        `${item.name} is now listed as a donation.`,
+        `${item.name} is now listed for donation. You'll be notified when someone claims it.`,
         "success",
       );
     },
@@ -360,21 +358,48 @@ const SavePlate = (() => {
     },
 
     /* ── Donation ── */
-    claimDonation(id) {
+    async claimDonation(id) {
       const d = _cache.donations.find((x) => x.id === id);
-      if (d && !d.claimed) {
-        d.claimed = true;
-        d.claimedByUid = _uid;
-        db.collection("donations").doc(String(id)).set(d);
-        this._addNotif(
-          "✅",
-          "Donation Claimed",
-          `You claimed "${d.name}". Contact ${d.donor} to arrange pickup.`,
-          "success",
-        );
-        return true;
+      if (!d || d.claimed) return false;
+
+      const u = this.user || {};
+
+      d.claimed = true;
+      d.claimedByUid = _uid;
+      d.claimedByName = u.name || "Someone";
+      d.claimedByEmail = u.email || "";
+
+      await db.collection("donations").doc(String(id)).delete();
+
+      _cache.donations = _cache.donations.filter((x) => x.id !== id);
+
+      // Notify claim
+      this._addNotif(
+        "✅",
+        "Donation Claimed!",
+        `You claimed "${d.name}" from ${d.donor}. Contact them at ${d.donorEmail || "N/A"} (${d.donorLocation || d.loc}) to arrange pickup.`,
+        "success",
+      );
+
+      // Notify dono
+      if (d.donorUid && d.donorUid !== _uid) {
+        const donorNotif = {
+          id: nextId(),
+          icon: "🎉",
+          title: "Your Donation Was Claimed!",
+          body: `"${d.name}" was claimed by ${u.name || "someone"}. They will contact you at ${u.email} to arrange pickup.`,
+          type: "success",
+          time: "Just now",
+          read: false,
+        };
+        db.collection("users")
+          .doc(d.donorUid)
+          .collection("notifications")
+          .doc(String(donorNotif.id))
+          .set(donorNotif);
       }
-      return false;
+
+      return true;
     },
 
     /* ── Meal ──*/
